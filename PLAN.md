@@ -10,11 +10,13 @@ The Property Manager Email Assistant is a Python-based **daemon service** that a
 
 1. **Python 3.13+** - Main programming language.
 2. **Pydantic** - For data validation and settings management (e.g., email credentials, LLM API keys).
+3. **asyncio** - For asynchronous programming support.
 
 ### Email Integration
 
-- **imaplib** & **email** (Python built-in) - For IMAP email access and parsing.
-- **smtplib** (Python built-in) - For sending email responses.
+- **aioimaplib** - For asynchronous IMAP email access and monitoring.
+- **aiosmtplib** - For asynchronous SMTP email sending.
+- **email** (Python built-in) - For email parsing.
 
 ### AI/NLP Components
 
@@ -35,8 +37,9 @@ The Property Manager Email Assistant is a Python-based **daemon service** that a
 
 ### Components Overview
 
-1. **Email Monitor Daemon**
-    - Periodically connects to the IMAP server to fetch unread emails.
+1. **Async Email Monitor**
+    - Asynchronously connects to the IMAP server to monitor for new emails.
+    - Uses `aioimaplib` for non-blocking email operations.
     - Parses email content (sender, subject, body, basic attachments if feasible).
     - Passes new emails to the AI Processing Agent.
     - Marks emails as read or moves them after processing.
@@ -46,42 +49,44 @@ The Property Manager Email Assistant is a Python-based **daemon service** that a
     - Analyzes email content to understand intent, extract key information, and decide on next steps.
     - Can invoke tools to perform actions like drafting a reply, categorizing the email, or logging information.
 
-3. **Tool Executor & Action Handler**
-    - A set of Python functions (tools) that the AI agent can call.
-    - Examples: `draft_reply(email_content, query)`, `categorize_email(email_content)`, `log_maintenance_request(details)`.
-    - Handles the execution of these tools, which might include sending an email via SMTP.
+3. **Async Tool Executor & Action Handler**
+    - A set of async Python functions (tools) that the AI agent can call.
+    - Examples: `async def draft_reply(email_content, query)`, `async def categorize_email(email_content)`, `async def log_maintenance_request(details)`.
+    - Handles the asynchronous execution of these tools, which might include sending an email via SMTP.
 
 ## Implementation Steps (Focus: Rapid Prototype ~4-6 hours)
 
 ### 1. Environment & Configuration (0.5 - 1 hour)
 
     *   Set up project directory, virtual environment (`venv`).
-    *   Install initial dependencies (e.g., `google-generativeai`, `langchain`, `python-dotenv`, `pydantic`).
+    *   Install initial dependencies (e.g., `google-generativeai`, `langchain`, `python-dotenv`, `pydantic`, `aioimaplib`, `aiosmtplib`).
     *   Create `.env` file for credentials (IMAP, SMTP, LLM API key).
     *   Define Pydantic models for configuration.
 
-### 2. Email Connectivity (1 - 1.5 hours)
+### 2. Async Email Connectivity (1 - 1.5 hours)
 
-    *   Implement IMAP connection to fetch unread emails (`imaplib`).
+    *   Implement async IMAP connection using `aioimaplib` to monitor for new emails.
     *   Parse basic email details (From, Subject, Body) using the `email` library.
-    *   Implement basic SMTP functionality to send emails (`smtplib`).
-    *   Function to mark emails as read.
+    *   Implement async SMTP functionality using `aiosmtplib` to send emails.
+    *   Async function to mark emails as read.
+    *   Set up async event loop and worker pool.
 
-### 3. AI Agent & Basic Tools (1.5 - 2.5 hours)
+### 3. AI Agent & Async Tools (1.5 - 2.5 hours)
 
     *   Set up connection to the chosen LLM (e.g., Gemini).
     *   Design a core prompt for the AI agent to triage emails and decide on actions.
-    *   Define 1-2 simple tools using LangChain or native LLM function calling (e.g., `draft_reply_tool`, `summarize_email_tool`).
+    *   Define 1-2 simple async tools using LangChain or native LLM function calling (e.g., `draft_reply_tool`, `summarize_email_tool`).
     *   Implement the logic for the agent to process an email and invoke a tool.
     *   The `draft_reply_tool` would use the LLM to generate a response draft.
 
-### 4. Daemon Loop & Logging (0.5 - 1 hour)
+### 4. Async Daemon Loop & Logging (0.5 - 1 hour)
 
-    *   Create a main loop for the daemon that:
-        *   Checks for new emails periodically.
+    *   Create an async main loop for the daemon that:
+        *   Asynchronously monitors for new emails.
         *   Processes them through the AI agent.
         *   Handles basic error logging.
     *   (Optional) Basic SQLite integration to track processed email IDs.
+    *   Implement graceful shutdown handling for async operations.
 
 ## Key Features (Simplified for PoC)
 
@@ -128,9 +133,10 @@ The Property Manager Email Assistant is a Python-based **daemon service** that a
 
 ## Success Metrics (for PoC)
 
-1. Successfully fetches and parses unread emails.
+1. Successfully monitors and parses unread emails asynchronously.
 2. AI agent correctly understands basic intents for a few sample emails.
-3. AI agent successfully invokes at least one tool (e.g., generates a draft reply).
-4. Daemon runs continuously and processes new emails as they arrive.
+3. AI agent successfully invokes at least one async tool (e.g., generates a draft reply).
+4. Async daemon runs continuously and processes new emails as they arrive.
+5. Demonstrates non-blocking behavior when handling multiple emails simultaneously.
 
 This revised plan aims for a manageable scope for your test assignment, focusing on demonstrating the core AI-assisted email processing loop.

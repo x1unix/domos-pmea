@@ -1,4 +1,5 @@
 PKG_NAME=domos-pmea
+CONFIG_FILE=config.yml
 
 .PHONY: venv
 venv:
@@ -10,7 +11,7 @@ install-dev: venv
 
 .PHONY: run
 run: install-dev
-	@uv run $(PKG_NAME)
+	@uv run $(PKG_NAME) --config $(CONFIG_FILE)
 
 .PHONY: clean
 clean:

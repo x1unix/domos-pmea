@@ -1,0 +1,21 @@
+email:
+  imap_host: "imap.gmail.com"
+  imap_port: 993
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  username: "username@gmail.com"
+  password: "your-password"
+  use_ssl: true
+  mailbox: "INBOX"
+  idle_timeout: 29
+  reconnect_delay: 5
+
+llm:
+  api_key: "your-api-key"
+  model_name: "gemini-2.0-flash"
+  temperature: 0.4
+
+# Set log file and custom level if needed.
+# logging:
+#   level: "INFO"
+#   file: "pmea.log"

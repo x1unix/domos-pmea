@@ -1,58 +1,74 @@
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
+from pathlib import Path
 import argparse
 import os
 import logging
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import yaml
 # Logger for this module
 logger = logging.getLogger(__name__)
 
-class AppConfig(BaseSettings):
-    # IMAP Settings
-    imap_server: str = Field(..., validation_alias='IMAP_SERVER')
-    imap_port: int = Field(993, validation_alias='IMAP_PORT')
-    imap_username: str = Field(..., validation_alias='IMAP_USERNAME')
-    imap_password: str = Field(..., validation_alias='IMAP_PASSWORD')
-
-    # SMTP Settings
-    smtp_server: str = Field(..., validation_alias='SMTP_SERVER')
-    smtp_port: int = Field(587, validation_alias='SMTP_PORT')
-    smtp_username: str = Field(..., validation_alias='SMTP_USERNAME')
-    smtp_password: str = Field(..., validation_alias='SMTP_PASSWORD')
-
-    # LLM API Key
-    # llm_api_key: str | None = Field(None, validation_alias='LLM_API_KEY')
-
-    # Database URL (Optional)
-    # database_url: str | None = Field(None, validation_alias='DATABASE_URL')
-
-    # Logging Configuration
-    log_file: str | None = Field(None, validation_alias='LOG_FILE')
-
-    model_config = SettingsConfigDict(env_file=os.getenv('ENV_FILE', 'config.env'), extra='ignore', case_sensitive=True)
+class EmailConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
+    imap_host: str = Field(..., description="IMAP server hostname", env="IMAP_HOST")
+    imap_port: int = Field(993, description="IMAP server port", env="IMAP_PORT")
+    smtp_host: str = Field(..., description="SMTP server hostname", env="SMTP_HOST")
+    smtp_port: int = Field(587, description="SMTP server port", env="SMTP_PORT")
+    username: str = Field(..., description="Email account username", env="EMAIL_USERNAME")
+    password: str = Field(..., description="Email account password", env="EMAIL_PASSWORD")
+    use_ssl: bool = Field(True, description="Whether to use SSL for connections", env="EMAIL_USE_SSL")
+    mailbox: str = Field("INBOX", description="Mailbox to monitor", env="EMAIL_MAILBOX")
+    idle_timeout: int = Field(29 * 60, description="IMAP IDLE timeout in seconds (default: 29 minutes)", env="IMAP_IDLE_TIMEOUT")
+    reconnect_delay: int = Field(5, description="Delay in seconds before reconnecting after connection loss", env="IMAP_RECONNECT_DELAY")
 
 
-def load_config() -> AppConfig:
+class LLMConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
+    api_key: str = Field(..., description="API key for the LLM service", env="LLM_API_KEY")
+    model_name: str = Field(..., description="Model name to use", env="LLM_MODEL_NAME")
+    temperature: float = Field(0.7, description="Temperature for generation", env="LLM_TEMPERATURE")
+
+class LoggerConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
+    level: str = Field("INFO", description="Logging level", env="LOG_LEVEL")
+    file: Optional[Path] = Field(None, description="Path to log file", env="LOG_FILE")
+
+class Config(BaseSettings):
+    email: EmailConfig = Field(default_factory=EmailConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    logging: LoggerConfig = Field(default_factory=LoggerConfig)
+
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+        env_prefix="",
+    )
+
+
+def load_config() -> Config:
     parser = argparse.ArgumentParser(description="Property Manager Email Assistant")
     parser.add_argument(
-        "--env-file",
+        "--config",
         type=str,
         default=os.getenv('ENV_FILE', 'config.env'),
         help="Path to the environment file (default: config.env)",
     )
     args, _ = parser.parse_known_args()
 
-    if not args.env_file:
-        # Rely on host env vars.
-        return AppConfig()
+    if not args.config:
+        raise Exception("No config file provided")
     
-    if not os.path.exists(args.env_file):
-        raise Exception(f"Environment file '{args.env_file}' doesn't exist.")
+    if not os.path.exists(args.config):
+        raise Exception(f"Config file '{args.config}' doesn't exist.")
 
-    return AppConfig(env_file=args.env_file) 
+    with open(args.config, 'r') as file:
+        config_data = yaml.safe_load(file)
+        return Config(**config_data)
 
 
-def setup_logging(config: AppConfig):
+def setup_logging(config: LoggerConfig):
     # Clear any existing handlers on the root logger
     # This is important to prevent duplicate logs if this function is called multiple times
     # or if basicConfig was called elsewhere.
@@ -63,37 +79,29 @@ def setup_logging(config: AppConfig):
             handler.close() # Close handler to release resources
 
     # Configure logging
-    log_level = logging.INFO # Or make this configurable via AppConfig later
+    log_level = getattr(logging, config.level.upper(), logging.INFO)
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     
     handlers: list[logging.Handler] = []
-    if config.log_file:
+    if config.file:
         try:
-            file_handler = logging.FileHandler(config.log_file, mode='a')
+            file_handler = logging.FileHandler(config.file, mode='a')
             file_handler.setFormatter(logging.Formatter(log_format))
             handlers.append(file_handler)
-            logger.info(f"Logging to file: {config.log_file}")
+            logger.info(f"Logging to file: {config.file}")
         except Exception as e:
             # If file logging fails, fall back to console and log the error
             console_handler_fallback = logging.StreamHandler()
             console_handler_fallback.setFormatter(logging.Formatter(log_format))
             handlers.append(console_handler_fallback)
-            # Log the error using a temporary basic config if our main one isn't up yet
-            # This logging call uses the module logger, which might not be configured yet
-            # if setup_logging is failing. So, we also print to stderr.
-            print(f"ERROR: Failed to setup file logging for '{config.log_file}': {e}. Falling back to console.")
-            logger.error(f"Failed to setup file logging for '{config.log_file}': {e}. Falling back to console.")
+            print(f"ERROR: Failed to setup file logging for '{config.file}': {e}. Falling back to console.")
+            logger.error(f"Failed to setup file logging for '{config.file}': {e}. Falling back to console.")
 
     else:
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(logging.Formatter(log_format))
         handlers.append(console_handler)
 
-    # Apply the handlers and level to the root logger
-    # Using basicConfig to set level and handlers for the root logger
-    # Force=True is important if basicConfig might have been called before (e.g. by a library)
     logging.basicConfig(level=log_level, format=log_format, handlers=handlers, force=True)
-    # After basicConfig, the root logger is configured. Our module logger will use this config.
-    # We can re-log the file logging error here if it occurred, so it goes to the now-configured logger.
-    if config.log_file and not any(isinstance(h, logging.FileHandler) for h in handlers):
-        logger.error(f"File logging to '{config.log_file}' was intended but failed. Using console logging.")
+    if config.file and not any(isinstance(h, logging.FileHandler) for h in handlers):
+        logger.error(f"File logging to '{config.file}' was intended but failed. Using console logging.")

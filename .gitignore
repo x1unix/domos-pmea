@@ -17,4 +17,5 @@ wheels/
 .venv
 
 # Configs and persistence files
-config.env
+config.yml
+config.yaml

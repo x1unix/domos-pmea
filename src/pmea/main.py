@@ -1,9 +1,5 @@
-import logging
 from pydantic import ValidationError
 from .app import Application
-
-# Get a logger for the main module
-logger = logging.getLogger(__name__) 
 
 def main():
     try:
