@@ -1,13 +1,20 @@
+consumer:
+  queue_size: 1000
 email:
   imap_host: "imap.gmail.com"
   imap_port: 993
   smtp_host: "smtp.gmail.com"
   smtp_port: 587
-  username: "username@gmail.com"
-  password: "your-password"
   use_ssl: true
   mailbox: "INBOX"
-  idle_timeout: 29
+
+  # Important: for gmail - enable 2fa and use app password.
+  # See: https://myaccount.google.com/u/1/apppasswords
+  username: "username@gmail.com"
+  password: "your-password"
+
+  # RFC 2177 recommends break and restart IDLE every 29 minutes to keep NATs happy.
+  idle_timeout: 1740
   reconnect_delay: 5
 
 llm:

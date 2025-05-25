@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Module (uv env)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pmea.main",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": [
+                "--config",
+                "${workspaceFolder}/config.yml"
+            ],
+            "preLaunchTask": "uv-sync"
+        }
+    ]
+}

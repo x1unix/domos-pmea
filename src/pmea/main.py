@@ -4,7 +4,7 @@ from .app import Application
 def main():
     try:
         app = Application.create()
-        app.run()
+        app.main()
     except ValidationError as e:
         # Format validation errors into a human-readable message
         error_messages = []

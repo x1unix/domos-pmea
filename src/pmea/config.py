@@ -9,6 +9,12 @@ import yaml
 # Logger for this module
 logger = logging.getLogger(__name__)
 
+class ListenerOptions(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
+    worker_count: int = Field(1, description="Number of workers to handle messages", env="LISTENER_WORKER_COUNT")
+    ignore_addresses: set[str] = Field(default_factory=set, description="Addresses to ignore", env="LISTENER_IGNORE_ADDRESSES")
+    msg_queue_size: int = Field(128, description="Messages queue size", env="CONSUMER_QUEUE_SIZE")
+
 class EmailConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
     imap_host: str = Field(..., description="IMAP server hostname", env="IMAP_HOST")
@@ -38,6 +44,7 @@ class Config(BaseSettings):
     email: EmailConfig = Field(default_factory=EmailConfig)
     llm: LLMConfig = Field(default_factory=LLMConfig)
     logging: LoggerConfig = Field(default_factory=LoggerConfig)
+    listener: ListenerOptions = Field(default_factory=ListenerOptions)
 
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",
@@ -48,15 +55,16 @@ class Config(BaseSettings):
 
 
 def load_config() -> Config:
+    # TODO: figure out why env vars are not working.
     parser = argparse.ArgumentParser(description="Property Manager Email Assistant")
     parser.add_argument(
         "--config",
         type=str,
-        default=os.getenv('ENV_FILE', 'config.env'),
-        help="Path to the environment file (default: config.env)",
+        required=True,
+        help="Path to the YAML config file",
     )
-    args, _ = parser.parse_known_args()
 
+    args, _ = parser.parse_known_args()
     if not args.config:
         raise Exception("No config file provided")
     

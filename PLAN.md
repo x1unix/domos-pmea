@@ -29,7 +29,7 @@ The Property Manager Email Assistant is a Python-based **daemon service** that a
 
 ### Development & Quality
 
-- **python-dotenv** - For managing secrets like API keys and email credentials.
+- **yaml** - For managing secrets like API keys and email credentials.
 - **pytest** - For unit testing (as time permits).
 - **black, flake8, mypy** - For code quality (use as time permits).
 

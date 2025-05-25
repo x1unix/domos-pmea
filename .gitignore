@@ -1,5 +1,7 @@
 # IDE files
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 
 # OS files
