@@ -4,20 +4,13 @@
 
 ### IMAP
 
-Initially I planned to make mail downloads also parallel and just queue mails to download (UIDs).
-Unfortunately doing this with a single IMAP connection which is also used for IDLE loop causes SSL connection errors and breaks a whole process.
+At startup, server checks for missed messages and waits for new one using IDLE loop.
 
-I had to pick between 2 options:
+Messages are downloaded in batches and then queued for processing. Batch size is configurable.
 
-1. Make downloads parallel but each client supplied with a separate IMAP connection or implement connection pool.
-2. Sequential messages download. Process messages separately.
-
-I picked the second option due to simplicity and I believe download process isn't the biggest bottleneck. \
-Downloaded messages are still handled in separate workers.
+For simplicity: dead letter queue is not implemented.
 
 ## AI Notes
-
-### Downsides
 
 Cursor was used to make this assignment. I tried mixing different models (Claude, Gemma, GPT) but sometimes experience look like [on this video](https://youtu.be/_2C2CNmK7dQ?si=AYklZ_-MXaGsohtM).
 
@@ -42,8 +35,8 @@ Here is a list of things which I could do if I had more time:
     - Use embedding models to cache prompts.
     - Support attachments (pdf, jpg)
 - **Mail processing:**
-    - Current design has a fatal flaw: it just stores last successfully processed msg UID.
-    - Instead: it should also have a dead-letter queue of unprocessed UIDs.
+    - Dead letter queue to process unhandled messages is not implemented.
+    - Parallel mail downloads are not supported.
 - **Chats:**
     - Maintain a whole conversation per topic. Possible solutions:
         - Persist in DB (Redis or other) + TTL.

@@ -18,10 +18,12 @@ class ListenerConfig:
     options: ListenerOptions
 
 class MailConsumer(Protocol):
+    """Abstract interface to implement mail handler."""
     async def consume_mail(self, m: Message) -> None:
         pass
 
 class IncomingMailListener:
+    """Listens for new messages and passes them to consumer."""
     _config: ListenerConfig
     _msg_queue: asyncio.Queue[tuple[int, message.Message]] | None = None
     _running: bool = False
@@ -89,9 +91,7 @@ class IncomingMailListener:
     async def _fetch_messages(self):
         # TODO: implement a dead letter queue.
         last_uid = await self._get_last_uid()
-        min_uid = last_uid + 1
 
-        # TODO: bulk message fetching.
         self._logger.info(f"fetching messages since uid {last_uid}...")
         query = f"{last_uid + 1}:*"
         await self._client.select(self._config.email_provider.mailbox)
@@ -130,6 +130,7 @@ class IncomingMailListener:
             await self._msg_queue.put((uid, msg))
 
     async def _idle_loop(self):
+        # TODO: this panics on a new mail, fix it later.
         reconnect_delay = self._config.email_provider.reconnect_delay
         idle_timeout = self._config.email_provider.idle_timeout
 
