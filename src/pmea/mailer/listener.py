@@ -5,7 +5,7 @@ from aioimaplib import aioimaplib
 from dataclasses import dataclass
 import logging
 from ..config import EmailConfig, ListenerOptions
-from .utils import parse_msg_payload, uid_from_fetch_line, mail_from_msg_data
+from .utils import iter_messages, parse_msg_payload, uid_from_fetch_line
 from email.utils import parsedate_to_datetime
 from email import message
 from .types import Contact, Message
@@ -87,9 +87,9 @@ class IncomingMailListener:
         await self._fetch_messages()
 
     async def _fetch_messages(self):
-        # TODO: instead of storing just last successfull UID, implement a dead letter queue.
-        # For now, just use stub impl with fetching messages since last successfull UID.
+        # TODO: implement a dead letter queue.
         last_uid = await self._get_last_uid()
+        min_uid = last_uid + 1
 
         # TODO: bulk message fetching.
         self._logger.info(f"fetching messages since uid {last_uid}...")
@@ -103,28 +103,31 @@ class IncomingMailListener:
             self._logger.info(f"no messages found since {last_uid}")
             return
 
+        # Explicitly specify UIDs to fetch to avoid accessing deleted messages or Gmail-style expunging.
+        uids: list[int] = []
         for line in lines:
             if not line:
                 continue
             msg_uid = uid_from_fetch_line(line)
             if msg_uid is None:
                 continue
-            await self._fetch_message(msg_uid)
+            uids.append(msg_uid)
 
-    async def _fetch_message(self, msg_uid: int):
-        self._logger.debug(f"fetching message #{msg_uid}...")
-        code, msg_data = await self._client.uid("FETCH", str(msg_uid), "(RFC822)")
+        # Bulk fetch messages in chunks. Can't do in parallel due to IMAP protocol limitations.
+        chunk_size = self._config.options.msg_fetch_batch_size
+        for i in range(0, len(uids), chunk_size):
+            # TODO: dead-letter queue for unfetched uids.
+            chunk = uids[i:i + chunk_size]
+            await self._fetch_messages_bulk(chunk)
+
+    async def _fetch_messages_bulk(self, uids: list[int]):
+        self._logger.debug(f"fetching messages chunk {uids}...")
+        code, msg_data = await self._client.uid("FETCH", ",".join(map(str, uids)), "(RFC822)")
         if code != "OK":
-            raise Exception(f"failed to fetch message #{msg_uid}: {code} {msg_data}")
-        if not msg_data:
-            raise Exception(f"empty message data for #{msg_uid}")
-
-        msg: message.Message | None = mail_from_msg_data(msg_data)
-        if msg is None:
-            self._logger.warning(f"Cannot parse message #{msg_uid} from {msg_data}")
-            return
-
-        await self._msg_queue.put((msg_uid, msg))
+            raise Exception(f"failed to fetch msg batch [{uids}:{uids[-1]}]: {code} {msg_data}")
+        for uid, msg in iter_messages(msg_data):
+            await self._update_last_uid(uid)
+            await self._msg_queue.put((uid, msg))
 
     async def _idle_loop(self):
         reconnect_delay = self._config.email_provider.reconnect_delay

@@ -1,10 +1,14 @@
+from itertools import batched
 import re
 import email
 from email import message
+from typing import Generator
 
-UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)\)$')
-"""Parses UID from FETCH response line (e.g. 'x FETCH (UID x)')"""
+UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)')
+MAIL_RSP_LINES_COUNT = 3
+
 def uid_from_fetch_line(line: bytes) -> int | None:
+    """Parses UID from FETCH response line (e.g. 'x FETCH (UID x)')"""
     try:
         line_str = line.decode("utf-8", errors="replace")
     except Exception:
@@ -17,26 +21,6 @@ def uid_from_fetch_line(line: bytes) -> int | None:
     except ValueError:
         return None
 
-def mail_from_msg_data(msg_data: list[bytes]) -> message.Message | None:
-        # msg_data is list which looks like this: [b'x FETCH (UID x RFC822 {...})', <bytearray>, b')', b'Success']
-        # TODO: check if there is a better way to parse emails.
-        if len(msg_data) < 2:
-            return None
-
-        email_content_candidate = msg_data[1]
-        raw_email: bytes | None = None
-
-        if isinstance(email_content_candidate, bytearray):
-            raw_email = bytes(email_content_candidate)
-        elif isinstance(email_content_candidate, bytes):
-            raw_email = email_content_candidate
-        else:
-            return None
-        if not raw_email:  # Handles None or empty bytes
-            return None
-
-        return email.message_from_bytes(raw_email)
-
 def parse_msg_payload(msg: message.Message) -> str | None:
     if not msg.is_multipart():
         return msg.get_payload(decode=True).decode('utf-8')
@@ -47,3 +31,29 @@ def parse_msg_payload(msg: message.Message) -> str | None:
         if content_type == 'text/plain':
             return part.get_payload(decode=True).decode('utf-8')
     return None
+
+# A list contains combined contents of all messages + enclosing 'Success' line.
+def iter_messages(msgs_response: list[bytes]) -> Generator[tuple[int, message.Message], None]:
+    """Returns an async iterator to traverse over batch messages response"""
+    if not msgs_response:
+        return
+
+    # Last element should be 'Success' line.
+    # Rest is (header, payload, ending) chunk of each message.
+    last_line = msgs_response[-1]
+    if not last_line.startswith(b'Success'):
+        raise Exception(f"unexpected response end: {last_line}")
+
+    msgs_response = msgs_response[:-1]
+    if len(msgs_response) % MAIL_RSP_LINES_COUNT != 0:
+        raise Exception(f"response lines not divisible by {MAIL_RSP_LINES_COUNT}, got {len(msgs_response)}")
+
+    for header, body, _ in batched(msgs_response, MAIL_RSP_LINES_COUNT):
+        uid = uid_from_fetch_line(header)
+        if not uid:
+            raise Exception(f"failed to parse UID from header: {header}")
+        try:
+            msg = email.message_from_bytes(body)
+            yield uid, msg
+        except Exception as e:
+            raise Exception(f"failed to message body (uid: {uid})") from e

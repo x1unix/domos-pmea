@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 class ListenerOptions(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
     worker_count: int = Field(1, description="Number of workers to handle messages", env="LISTENER_WORKER_COUNT")
+    msg_fetch_batch_size: int = Field(10, description="Number of messages to fetch per IMAP request", env="LISTENER_MSG_FETCH_BATCH_SIZE")
+    msg_queue_size: int = Field(10, description="Messages queue size", env="CONSUMER_QUEUE_SIZE")
     ignore_addresses: set[str] = Field(default_factory=set, description="Addresses to ignore", env="LISTENER_IGNORE_ADDRESSES")
-    msg_queue_size: int = Field(128, description="Messages queue size", env="CONSUMER_QUEUE_SIZE")
 
 class EmailConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
