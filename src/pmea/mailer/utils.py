@@ -4,6 +4,8 @@ import email
 from email import message
 from typing import Generator
 
+from pmea.mailer.types import MessageHeaders
+
 UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)')
 MAIL_RSP_LINES_COUNT = 3
 
@@ -57,3 +59,11 @@ def iter_messages(msgs_response: list[bytes]) -> Generator[tuple[int, message.Me
             yield uid, msg
         except Exception as e:
             raise Exception(f"failed to message body (uid: {uid})") from e
+        
+def parse_message_headers(msg: message.Message) -> MessageHeaders:
+    references = msg.get('References', '').split()
+    return MessageHeaders(
+        msg_id=msg.get('Message-ID', ''),
+        in_reply_to=msg.get('In-Reply-To', ''),
+        references=references if references else None,
+    )

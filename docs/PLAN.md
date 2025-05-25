@@ -1,16 +1,39 @@
 # Property Manager Email Assistant - Implementation Plan
 
+This document is partially created both by AI and me.
+
 ## Project Overview
 
 The Property Manager Email Assistant is a Python-based **daemon service** that automates email communication for property management systems. The service monitors an email inbox, processes incoming messages using an AI agent, generates appropriate responses, and triggers relevant actions based on the email content and agent decisions. This plan focuses on a simplified version suitable for a rapid prototype.
 
 ## High-level approach
 
+### RAG
+
 RAG receives a message from client via email.
 
 RAG can request additional information for context using tool calls and/or ask additional information from user.
 
 If user requests some action (call me, etc.) - RAG should create and forward mail to property manager.
+
+### Mail Thread History
+
+Per research, the most standard way to track mail thread is to rely on following headers:
+
+| Header          | What it contains                                                | How to use it                                                                  |
+| --------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Message-ID**  | A globally-unique identifier for *this* message.                | Always store it; it is the primary key.                                        |
+| **In-Reply-To** | The single Message-ID this note is replying to.                 | First place to look when you want to connect the dots.                         |
+| **References**  | An ordered list of *all* ancestor Message-IDs, oldest → newest. | If *In-Reply-To* is absent or you want the root of the thread, scan this list. |
+
+Redis is used to store message IDs and map them to a thread ID:
+
+```redis
+SET   msg:{Message-ID}   {thread_id}      # forward map (1 key per message)
+SADD  thread:{thread_id} {Message-ID}     # reverse map (1 set per thread)
+```
+
+Same thread ID is used for LLM conversations.
 
 ## Technology Stack
 
@@ -63,62 +86,112 @@ If user requests some action (call me, etc.) - RAG should create and forward mai
 
    #### Detailed Tool Definitions
 
-    1. **`async def get_property_tenant_details(address: Optional[str] = None, tenant_name: Optional[str] = None, tenant_email: Optional[str] = None, property_id: Optional[int] = None) -> dict`**
-        - **Purpose**: Retrieves detailed information about a property and its tenant from a data source (e.g., `data/properties_db.json`). This is crucial for identifying the sender, their address, rent details, and the relevant stakeholder/property manager.
-        - **Motivation/Reasoning**: This tool is essential for satisfying Requirement #3a ("Load relevant information"). It allows the AI to understand who the sender is, what property they are associated with, their current rent, and who the responsible property manager/stakeholder is. This context is vital for personalizing responses (e.g., addressing the tenant by name, confirming their address for a lockout) and for routing issues or information correctly (e.g., knowing the monthly rent for a query, or the stakeholder to notify). It supports handling example emails like "rent", "Lease terms", and "help!".
-        - **Parameters**:
-            - `address` (Optional\[str]): Full or partial address of the property.
-            - `tenant_name` (Optional\[str]): Name of the tenant.
-            - `tenant_email` (Optional\[str]): Email address of the tenant.
-            - `property_id` (Optional\[int]): Unique identifier for the property.
-            (At least one parameter should be provided for lookup.)
-        - **Returns**: A list of dictionaries, where each dictionary closely matches the structure in `data/properties_db.json`: `property_id`, `building_number`, `street_name`, `city`, `unit`, `tenant` (an object with `name`, `email`, `phone`), `stakeholder_email`, `monthly_rent_usd_cents`. Returns an empty list (`[]`) if no matching properties are found.
+### `async def find_properties_by_criteria(address: Optional[str] = None, tenant_name: Optional[str] = None, tenant_email: Optional[str] = None) -> List[dict]`
 
-    2. **`async def draft_ai_reply(original_email_body: str, original_email_subject: str, sender_email: str, identified_intent: str, context_data: Optional[dict] = None, proposed_actions: Optional[list[str]] = None, tone: str = "professional and helpful") -> dict`**
-        - **Purpose**: Generates a context-aware, ready-to-send plain-text email reply using an LLM. This tool takes the analyzed information and crafts a suitable response.
-        - **Motivation/Reasoning**: This directly addresses Requirement #3b ("Generate a Draft Reply"). The AI agent needs a mechanism to formulate responses. This tool provides that capability, allowing the agent to use the original email's content, its identified intent, and any fetched contextual data (like property details) to generate a relevant and helpful reply. It's a core component for automating communication.
-        - **Parameters**:
-            - `original_email_body` (str): The content of the incoming email.
-            - `original_email_subject` (str): The subject of the incoming email.
-            - `sender_email` (str): The email address of the original sender.
-            - `identified_intent` (str): The main purpose of the email as understood by the agent (e.g., "maintenance_request", "rent_inquiry", "access_issue").
-            - `context_data` (Optional[dict]): A dictionary containing contextual information for drafting the reply. Expected structure: `{"property_details": List[dict] | None, "chat_id": str}`. `property_details` is the result from `get_property_tenant_details`.
-            - `proposed_actions` (Optional\[list\[str]]): A list of actions the AI has decided to take or has taken (e.g., "Maintenance ticket for 'broken toilet' has been created.").
-            - `tone` (Optional\[str]): Desired tone of the reply (e.g., "empathetic", "formal").
-        - **Returns**: A dictionary with `subject` and `body` for the reply email.
+- **Description**: Searches for and retrieves detailed information about properties and their tenants from a data source (e.g., `data/properties_db.json`) based on criteria like address, tenant name, or tenant email. This tool is essential for Requirement #3a ("Load relevant information") when specific identifiers like a property ID are not initially known. It allows the AI to look up properties based on details often found in emails (e.g., tenant mentioning their street or name). This context is vital for personalizing responses and routing issues. It supports handling example emails like "rent", "Lease terms".
+- **Parameters**:
 
-    3. **`async def create_maintenance_ticket(property_id: int, tenant_email: str, issue_description: str, urgency: str = "medium") -> dict`**
-        - **Purpose**: Creates a structured maintenance ticket for issues reported by tenants (e.g., "fix the toilet"). As per requirements, JSON output is sufficient.
-        - **Motivation/Reasoning**: This tool fulfills part of Requirement #3c ("Create Action Items"). Many tenant emails will involve requests for repairs or reporting issues (like the "rent" email example with the broken toilet). This tool allows the AI to translate such a request into a structured action item (a maintenance ticket), which can then be logged or passed to a maintenance system/personnel.
-        - **Parameters**:
-            - `property_id` (int): The ID of the property where the issue is located.
-            - `tenant_email` (str): The email of the tenant reporting the issue (used for identification and contact).
-            - `issue_description` (str): A clear description of the maintenance problem.
-            - `urgency` (Optional\[str]): The urgency level (e.g., "low", "medium", "high").
-        - **Returns**: A dictionary confirming the ticket creation, including a `ticket_id` (can be a simple unique ID for PoC), `status` (e.g., "open"), and the details provided.
+    | Name           | Type  | Optional | Default | Description                                  |
+    |----------------|-------|----------|---------|----------------------------------------------|
+    | `address`      | `str` | Yes      | `None`  | Full or partial address of the property.     |
+    | `tenant_name`  | `str` | Yes      | `None`  | Name of the tenant.                          |
+    | `tenant_email` | `str` | Yes      | `None`  | Email address of the tenant.                 |
 
-    4. **`async def schedule_manager_task(task_type: str, description: str, tenant_email: Optional[str] = None, property_id: Optional[int] = None, due_date_time_iso: Optional[str] = None, manager_email: Optional[str] = None) -> dict`**
-        - **Purpose**: Creates a task for a human property manager, such as calling a tenant back, reviewing a specific situation, or forwarding an email that requires direct human attention.
-        - **Motivation/Reasoning**: This is another key aspect of Requirement #3c ("Create Action Items") and aligns with the high-level approach that if the AI cannot fully resolve an issue, it should escalate or forward it to a human. Example emails like "help! I locked myself out" or "call me back please" often require direct human intervention. This tool allows the AI to create a task for the property manager, ensuring these requests are not dropped and are acted upon.
-        - **Parameters**:
-            - `task_type` (str): Type of task (e.g., "callback_request", "information_forward", "urgent_review").
-            - `description` (str): Detailed description of the task (e.g., "Tenant locked out, needs access assistance." or "Call Wilkin Dan at 2000 Holland Av Apt 1F regarding rent and toilet.").
-            - `tenant_email` (Optional\[str]): Email of the tenant related to the task.
-            - `property_id` (Optional\[int]): Property ID related to the task.
-            - `due_date_time_iso` (Optional\[str]): Suggested due date/time in ISO format (e.g., "2024-07-28T16:00:00Z" for "tomorrow 4pm").
-            - `manager_email` (Optional\[str]): Specific manager to assign; if None, could default to `stakeholder_email` from property data.
-        - **Returns**: A dictionary confirming task creation, including a `task_id` and `status`.
+    *Note: At least one parameter (`address`, `tenant_name`, or `tenant_email`) should be provided for lookup.*
+- **Returns**:
+  - **Type**: `List[dict]`
+  - **Description**: A list of dictionaries. Returns an empty list (`[]`) if no matching properties are found. Each dictionary in the list will have the following structure, mirroring `data/properties_db.json`:
+    - `property_id`: `int`
+    - `building_number`: `str`
+    - `street_name`: `str`
+    - `city`: `str`
+    - `unit`: `str`
+    - `tenant`: `dict` (object with `name: str`, `email: str`, `phone: str`)
+    - `stakeholder_email`: `str`
+    - `monthly_rent_usd_cents`: `int`
 
-    5. **`async def send_email(to_address: str, subject:str, body: str, cc_addresses: Optional[list[str]] = None, bcc_addresses: Optional[list[str]] = None) -> dict`**:
-        - **Purpose**: Sends an email using the configured SMTP service (e.g., `aiosmtplib`). This tool would be called after a reply is drafted or if a direct email needs to be sent based on agent logic.
-        - **Motivation/Reasoning**: This tool is necessary to satisfy Requirement #3d ("Send Email"). After a reply is drafted by `draft_ai_reply` or if the AI needs to send a notification (e.g., confirming a maintenance ticket or a scheduled task), this tool provides the mechanism to actually dispatch the email to the tenant or other stakeholders.
-        - **Parameters**:
-            - `to_address` (str): Primary recipient's email address.
-            - `subject` (str): Subject line of the email.
-            - `body` (str): Plain-text body of the email.
-            - `cc_addresses` (Optional\[list\[str]]): List of CC recipients.
-            - `bcc_addresses` (Optional\[list\[str]]): List of BCC recipients.
-        - **Returns**: A dictionary with `status` ("sent" or "failed") and `message_id` if successful.
+### `async def get_property_by_id(property_id: int) -> Optional[dict]`
+
+- **Description**: Retrieves detailed information for a specific property using its unique `property_id`. Provides a direct and efficient way to fetch property details when the unique identifier is already known (e.g., from a previous search or if a user explicitly provides it). This avoids redundant searching and ensures precise data retrieval for subsequent actions.
+- **Parameters**:
+
+    | Name          | Type  | Optional | Default | Description                          |
+    |---------------|-------|----------|---------|--------------------------------------|
+    | `property_id` | `int` | No       | N/A     | The unique identifier for the property. |
+
+- **Returns**:
+  - **Type**: `Optional[dict]`
+  - **Description**: A single dictionary closely matching the structure in `data/properties_db.json` if found (see structure under `find_properties_by_criteria` returns), otherwise `None`.
+
+### `async def draft_ai_reply(original_email_body: str, original_email_subject: str, sender_email: str, identified_intent: str, context_data: Optional[dict] = None, proposed_actions: Optional[list[str]] = None, tone: str = "professional and helpful") -> dict`
+
+- **Description**: Generates a context-aware, ready-to-send plain-text email reply using an LLM. This tool directly addresses Requirement #3b ("Generate a Draft Reply"), allowing the AI agent to use the original email's content, its identified intent, and fetched contextual data (from `find_properties_by_criteria` or `get_property_by_id`) to generate a relevant reply.
+- **Parameters**:
+
+    | Name                     | Type                  | Optional | Default                        | Description                                                                                                                                                              |
+    |--------------------------|-----------------------|----------|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `original_email_body`    | `str`                 | No       | N/A                            | The content of the incoming email.                                                                                                                                       |
+    | `original_email_subject` | `str`                 | No       | N/A                            | The subject of the incoming email.                                                                                                                                       |
+    | `sender_email`           | `str`                 | No       | N/A                            | The email address of the original sender.                                                                                                                                |
+    | `identified_intent`      | `str`                 | No       | N/A                            | The main purpose of the email as understood by the agent (e.g., "maintenance_request", "rent_inquiry", "access_issue").                                               |
+    | `context_data`           | `dict`                | Yes      | `None`                         | Contextual information. Expected structure: `{"property_details": Union[List[dict], dict, None], "chat_id": str}`. `property_details` comes from property lookup tools. |
+    | `proposed_actions`       | `Optional[List[str]]` | Yes      | `None`                         | List of actions the AI has decided to take/has taken (e.g., "Maintenance ticket created.").                                                                           |
+    | `tone`                   | `str`                 | Yes      | `"professional and helpful"` | Desired tone of the reply (e.g., "empathetic", "formal").                                                                                                             |
+
+- **Returns**:
+  - **Type**: `dict`
+  - **Description**: A dictionary with `subject: str` and `body: str` for the reply email.
+
+### `async def create_maintenance_ticket(property_id: int, tenant_email: str, issue_description: str, urgency: str = "medium") -> dict`
+
+- **Description**: Creates a structured maintenance ticket for issues reported by tenants (e.g., "fix the toilet"). This fulfills part of Requirement #3c ("Create Action Items"), translating email requests into structured action items for logging or passing to maintenance personnel.
+- **Parameters**:
+
+    | Name                | Type  | Optional | Default    | Description                                                                 |
+    |---------------------|-------|----------|------------|-----------------------------------------------------------------------------|
+    | `property_id`       | `int` | No       | N/A        | The ID of the property where the issue is located.                          |
+    | `tenant_email`      | `str` | No       | N/A        | The email of the tenant reporting the issue (for identification/contact). |
+    | `issue_description` | `str` | No       | N/A        | A clear description of the maintenance problem.                             |
+    | `urgency`           | `str` | Yes      | `"medium"` | The urgency level (e.g., "low", "medium", "high").                          |
+
+- **Returns**:
+  - **Type**: `dict`
+  - **Description**: A dictionary confirming ticket creation, e.g., `{"ticket_id": "some_uuid", "status": "open", "details": {...}}`.
+
+### `async def schedule_manager_task(task_type: str, description: str, tenant_email: Optional[str] = None, property_id: Optional[int] = None, due_date_time_iso: Optional[str] = None, manager_email: Optional[str] = None) -> dict`
+
+- **Description**: Creates a task for a human property manager (e.g., callback, review, forward email). Addresses Requirement #3c ("Create Action Items") for issues requiring human intervention (e.g., "locked out", "call me back"), ensuring requests are actioned.
+- **Parameters**:
+
+    | Name                | Type            | Optional | Default | Description                                                                                                |
+    |---------------------|-----------------|----------|---------|------------------------------------------------------------------------------------------------------------|
+    | `task_type`         | `str`           | No       | N/A     | Type of task (e.g., "callback_request", "information_forward", "urgent_review").                         |
+    | `description`       | `str`           | No       | N/A     | Detailed description of the task.                                                                          |
+    | `tenant_email`      | `Optional[str]` | Yes      | `None`  | Email of the tenant related to the task.                                                                   |
+    | `property_id`       | `Optional[int]` | Yes      | `None`  | Property ID related to the task.                                                                           |
+    | `due_date_time_iso` | `Optional[str]` | Yes      | `None`  | Suggested due date/time in ISO format (e.g., "2024-07-28T16:00:00Z").                                      |
+    | `manager_email`     | `Optional[str]` | Yes      | `None`  | Specific manager to assign; if None, could default to `stakeholder_email` from property data.          |
+
+- **Returns**:
+  - **Type**: `dict`
+  - **Description**: A dictionary confirming task creation, e.g., `{"task_id": "some_uuid", "status": "pending"}`.
+
+### `async def send_email(to_address: str, subject:str, body: str, cc_addresses: Optional[list[str]] = None, bcc_addresses: Optional[list[str]] = None) -> dict`
+
+- **Description**: Sends an email using the configured SMTP service. This tool is necessary to satisfy Requirement #3d ("Send Email") after a reply is drafted or if the AI needs to send a notification.
+- **Parameters**:
+
+    | Name            | Type                  | Optional | Default | Description                               |
+    |-----------------|-----------------------|----------|---------|-------------------------------------------|
+    | `to_address`    | `str`                 | No       | N/A     | Primary recipient's email address.        |
+    | `subject`       | `str`                 | No       | N/A     | Subject line of the email.                |
+    | `body`          | `str`                 | No       | N/A     | Plain-text body of the email.             |
+    | `cc_addresses`  | `Optional[List[str]]` | Yes      | `None`  | List of CC recipients.                    |
+    | `bcc_addresses` | `Optional[List[str]]` | Yes      | `None`  | List of BCC recipients.                   |
+
+- **Returns**:
+  - **Type**: `dict`
+  - **Description**: A dictionary with `status: str` ("sent" or "failed") and `message_id: Optional[str]` if successful.
 
 ## Implementation Steps (Focus: Rapid Prototype ~4-6 hours)
 

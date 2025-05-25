@@ -1,10 +1,8 @@
 [
   {
     "property_id": 1,
-    "building_number": "123",
-    "street_name": "Greenwich Ave",
+    "address": "2000 Holland Av, Apt 1F",
     "city": "New York",
-    "unit": "Apt 5B",
     "tenant": {
       "name": "Alex Smith",
       "email": "happyeyeballs4@gmail.com",
@@ -15,13 +13,11 @@
   },
   {
     "property_id": 2,
-    "building_number": "2000",
-    "street_name": "Holland Av",
+    "address": "123 Greenwich Ave, Apt 5B",
     "city": "Bronx",
-    "unit": "Apt 1F",
     "tenant": {
       "name": "Wilkin Dan",
-      "email": "wilkin.dan@emailprovider.com",
+      "email": "bobr@kurwa.dev",
       "phone": "+1-718-555-0102"
     },
     "stakeholder_email": "bronx.management@example.com",
@@ -29,10 +25,8 @@
   },
   {
     "property_id": 3,
-    "building_number": "100",
-    "street_name": "Holland Av",
+    "address": "100 Holland Av, Apt 2D",
     "city": "Bronx",
-    "unit": "Apt 2D",
     "tenant": {
       "name": "Miki Tanaka",
       "email": "miki.tanaka@emailprovider.net",
@@ -43,10 +37,8 @@
   },
   {
     "property_id": 4,
-    "building_number": "450",
-    "street_name": "Market St",
+    "address": "450 Market St, Suite 300",
     "city": "San Francisco",
-    "unit": "Suite 300",
     "tenant": {
       "name": "Jane Doe",
       "email": "jane.doe@company.com",
@@ -57,10 +49,8 @@
   },
   {
     "property_id": 5,
-    "building_number": "789",
-    "street_name": "Oak Lane",
+    "address": "789 Oak Lane, Unit 12",
     "city": "Chicago",
-    "unit": "Unit 12",
     "tenant": {
       "name": "Robert Jones",
       "email": "rob.jones@domain.org",
@@ -71,10 +61,8 @@
   },
   {
     "property_id": 6,
-    "building_number": "321",
-    "street_name": "Pine St",
+    "address": "321 Pine St, #101",
     "city": "Seattle",
-    "unit": "#101",
     "tenant": {
       "name": "Emily White",
       "email": "emily.w@seattlemail.com",
@@ -85,10 +73,8 @@
   },
   {
     "property_id": 7,
-    "building_number": "555",
-    "street_name": "Maple Dr",
+    "address": "555 Maple Dr, Apt C",
     "city": "Austin",
-    "unit": "Apt C",
     "tenant": {
       "name": "David Brown",
       "email": "david.b@austinmail.org",
@@ -99,10 +85,8 @@
   },
   {
     "property_id": 8,
-    "building_number": "987",
-    "street_name": "Elm Rd",
+    "address": "987 Elm Rd, PH-2",
     "city": "Miami",
-    "unit": "PH-2",
     "tenant": {
       "name": "Sophia Garcia",
       "email": "sophia.g@miamihotmail.com",
@@ -113,10 +97,8 @@
   },
   {
     "property_id": 9,
-    "building_number": "654",
-    "street_name": "Birch Blvd",
+    "address": "654 Birch Blvd, Unit 7A",
     "city": "Denver",
-    "unit": "Unit 7A",
     "tenant": {
       "name": "Michael Lee",
       "email": "michael.lee@denverpost.co",
@@ -127,10 +109,8 @@
   },
   {
     "property_id": 10,
-    "building_number": "111",
-    "street_name": "Willow Way",
+    "address": "111 Willow Way, 3rd Floor",
     "city": "Boston",
-    "unit": "3rd Floor",
     "tenant": {
       "name": "Olivia Miller",
       "email": "olivia.m@bostonconnect.com",

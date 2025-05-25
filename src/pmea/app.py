@@ -1,6 +1,8 @@
 import asyncio
 import logging
-from .handler import Consumer
+
+from pmea.agent.consumer import ConsumerConfig
+from .agent import Consumer
 from .config import Config, load_config, setup_logging
 from .mailer import IncomingMailListener, ListenerConfig
 
@@ -11,7 +13,7 @@ class Application:
     def __init__(self, config: Config):
         self.config = config
 
-        msg_consumer = Consumer()
+        msg_consumer = Consumer(ConsumerConfig(config.redis, config.chats))
         listener_config = ListenerConfig(config.email, config.listener)
         self.listener = IncomingMailListener(listener_config, msg_consumer)
 

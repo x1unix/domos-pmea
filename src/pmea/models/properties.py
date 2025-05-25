@@ -11,10 +11,8 @@ class Tenant:
 @dataclass
 class Apartment:
     property_id: int
-    building_number: str
-    street_name: str
+    address: str
     city: str
-    unit: str
     tenant: Tenant
     stakeholder_email: str
     monthly_rent_usd_cents: int

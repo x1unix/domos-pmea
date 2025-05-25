@@ -21,3 +21,4 @@ wheels/
 # Configs and persistence files
 config.yml
 config.yaml
+data/tickets

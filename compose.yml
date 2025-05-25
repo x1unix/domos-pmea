@@ -1,7 +1,13 @@
 services:
   valkey:
-    image: valkey/valkey:latest
+    image: redis/redis-stack:latest
     container_name: valkey
     ports:
       - "6379:6379"
+      - "8001:8001"
     restart: unless-stopped
+    volumes:
+      - valkey-data:/data
+
+volumes:
+  valkey-data:

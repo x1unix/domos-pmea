@@ -4,6 +4,12 @@ import datetime
 from typing import Self
 
 @dataclass
+class MessageHeaders:
+    msg_id: str
+    in_reply_to: str | None
+    references: list[str] | None
+
+@dataclass
 class Contact:
     name: str
     email: str
@@ -21,3 +27,4 @@ class Message:
     subject: str
     body: str
     sent_at: datetime.datetime
+    headers: MessageHeaders
