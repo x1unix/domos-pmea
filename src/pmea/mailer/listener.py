@@ -5,7 +5,7 @@ from aioimaplib import aioimaplib
 from dataclasses import dataclass
 import logging
 from ..config import EmailConfig, ListenerOptions
-from .utils import iter_messages, parse_msg_payload, uid_from_fetch_line
+from .utils import iter_messages, parse_message_headers, parse_msg_payload, uid_from_fetch_line
 from email.utils import parsedate_to_datetime
 from email import message
 from .types import Contact, Message
@@ -179,6 +179,7 @@ class IncomingMailListener:
         subject = msg.get("Subject", "")
         sent_at = parsedate_to_datetime(msg.get("Date", ""))
         body = parse_msg_payload(msg)
+        headers = parse_message_headers(msg)
 
         if not body:
             self._logger.warning(
@@ -186,5 +187,13 @@ class IncomingMailListener:
             )
             return
 
-        m = Message(uid, sender, receiver, subject, body, sent_at)
+        m = Message(
+            uid=uid,
+            sender=sender, 
+            receiver=receiver, 
+            subject=subject, 
+            body=body, 
+            sent_at=sent_at, 
+            headers=headers,
+        )
         await self._consumer.consume_mail(m)
