@@ -1,0 +1,142 @@
+[
+  {
+    "property_id": 1,
+    "building_number": "123",
+    "street_name": "Greenwich Ave",
+    "city": "New York",
+    "unit": "Apt 5B",
+    "tenant": {
+      "name": "Alex Smith",
+      "email": "happyeyeballs4@gmail.com",
+      "phone": "+1-212-555-0101"
+    },
+    "stakeholder_email": "property.services@example.com",
+    "monthly_rent_usd_cents": 320000
+  },
+  {
+    "property_id": 2,
+    "building_number": "2000",
+    "street_name": "Holland Av",
+    "city": "Bronx",
+    "unit": "Apt 1F",
+    "tenant": {
+      "name": "Wilkin Dan",
+      "email": "wilkin.dan@emailprovider.com",
+      "phone": "+1-718-555-0102"
+    },
+    "stakeholder_email": "bronx.management@example.com",
+    "monthly_rent_usd_cents": 145000
+  },
+  {
+    "property_id": 3,
+    "building_number": "100",
+    "street_name": "Holland Av",
+    "city": "Bronx",
+    "unit": "Apt 2D",
+    "tenant": {
+      "name": "Miki Tanaka",
+      "email": "miki.tanaka@emailprovider.net",
+      "phone": "+1-718-555-0103"
+    },
+    "stakeholder_email": "portfolio.manager@example.com",
+    "monthly_rent_usd_cents": 160000
+  },
+  {
+    "property_id": 4,
+    "building_number": "450",
+    "street_name": "Market St",
+    "city": "San Francisco",
+    "unit": "Suite 300",
+    "tenant": {
+      "name": "Jane Doe",
+      "email": "jane.doe@company.com",
+      "phone": "+1-415-555-0104"
+    },
+    "stakeholder_email": "happyeyeballs4@gmail.com",
+    "monthly_rent_usd_cents": 550000
+  },
+  {
+    "property_id": 5,
+    "building_number": "789",
+    "street_name": "Oak Lane",
+    "city": "Chicago",
+    "unit": "Unit 12",
+    "tenant": {
+      "name": "Robert Jones",
+      "email": "rob.jones@domain.org",
+      "phone": "+1-312-555-0105"
+    },
+    "stakeholder_email": "chicago.office@example.com",
+    "monthly_rent_usd_cents": 210000
+  },
+  {
+    "property_id": 6,
+    "building_number": "321",
+    "street_name": "Pine St",
+    "city": "Seattle",
+    "unit": "#101",
+    "tenant": {
+      "name": "Emily White",
+      "email": "emily.w@seattlemail.com",
+      "phone": "+1-206-555-0106"
+    },
+    "stakeholder_email": "seattle.props@example.com",
+    "monthly_rent_usd_cents": 285000
+  },
+  {
+    "property_id": 7,
+    "building_number": "555",
+    "street_name": "Maple Dr",
+    "city": "Austin",
+    "unit": "Apt C",
+    "tenant": {
+      "name": "David Brown",
+      "email": "david.b@austinmail.org",
+      "phone": "+1-512-555-0107"
+    },
+    "stakeholder_email": "austin.leasing@example.com",
+    "monthly_rent_usd_cents": 195000
+  },
+  {
+    "property_id": 8,
+    "building_number": "987",
+    "street_name": "Elm Rd",
+    "city": "Miami",
+    "unit": "PH-2",
+    "tenant": {
+      "name": "Sophia Garcia",
+      "email": "sophia.g@miamihotmail.com",
+      "phone": "+1-305-555-0108"
+    },
+    "stakeholder_email": "miami.luxury@example.com",
+    "monthly_rent_usd_cents": 720000
+  },
+  {
+    "property_id": 9,
+    "building_number": "654",
+    "street_name": "Birch Blvd",
+    "city": "Denver",
+    "unit": "Unit 7A",
+    "tenant": {
+      "name": "Michael Lee",
+      "email": "michael.lee@denverpost.co",
+      "phone": "+1-303-555-0109"
+    },
+    "stakeholder_email": "denver.apts@example.com",
+    "monthly_rent_usd_cents": 230000
+  },
+  {
+    "property_id": 10,
+    "building_number": "111",
+    "street_name": "Willow Way",
+    "city": "Boston",
+    "unit": "3rd Floor",
+    "tenant": {
+      "name": "Olivia Miller",
+      "email": "olivia.m@bostonconnect.com",
+      "phone": "+1-617-555-0110"
+    },
+    "stakeholder_email": "boston.rentals@example.com",
+    "monthly_rent_usd_cents": 310000
+  }
+]

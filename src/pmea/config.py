@@ -16,6 +16,10 @@ class ListenerOptions(BaseSettings):
     msg_queue_size: int = Field(10, description="Messages queue size", env="CONSUMER_QUEUE_SIZE")
     ignore_addresses: set[str] = Field(default_factory=set, description="Addresses to ignore", env="LISTENER_IGNORE_ADDRESSES")
 
+class TestDataConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
+    properties: Path = Field(..., description="Path to the properties database", env="TEST_DATA_PROPERTIES")
+
 class EmailConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
     imap_host: str = Field(..., description="IMAP server hostname", env="IMAP_HOST")
@@ -46,6 +50,7 @@ class Config(BaseSettings):
     llm: LLMConfig = Field(default_factory=LLMConfig)
     logging: LoggerConfig = Field(default_factory=LoggerConfig)
     listener: ListenerOptions = Field(default_factory=ListenerOptions)
+    test_data: TestDataConfig = Field(default_factory=TestDataConfig)
 
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",
