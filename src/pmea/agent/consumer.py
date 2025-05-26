@@ -11,16 +11,16 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 from ..mailer import ThreadConsumer, Message
 from .prompts import SYSTEM_PROMPT, build_error_response, message_to_prompt
 from .tools import CallToolsDependencies, build_call_tools, ToolContext
+from .utils import InferenceResult, output_from_inference_result
 
 MSG_HISTORY_KEY = "history"  # For openai - "chat_history"
 MSG_INPUT_KEY = "input"
-# MSG_INPUT_KEY = "text"
+MSG_OUTPUT_KEY = "output"
 
 @dataclass
 class ConsumerConfig:
     get_chat_model: Callable[[], BaseChatModel]
     get_history: Callable[[str], BaseChatMessageHistory]
-
 
 class LLMMailConsumer(ThreadConsumer):
     """Routes incoming email threads to LLM."""
@@ -44,16 +44,19 @@ class LLMMailConsumer(ThreadConsumer):
         )
         self._logger.info("Msg: %s:%s; Request:\n%s", thread_id, m.uid, m.body)
 
+        result: InferenceResult | None = None
         try:
-            await self._run_inference(thread_id, m)
+            result = await self._run_inference(thread_id, m)
             self._logger.info("Msg: %s:%s; inference done", thread_id, m.uid)
         except Exception as e:
             await self._handle_error(e, thread_id, m)
             raise e
 
-        # await self._replyer.reply_in_thread(thread_id, m, response)
+        output = output_from_inference_result(result)
+        if output:
+            await self._deps.replyer.reply_in_thread(thread_id, m, output)
 
-    async def _handle_error(self, err: Exception, thread_id: str, m: Message) -> None:
+    async def _handle_error(self, err: Exception, thread_id: str, m: Message) -> str:
         try:
             # Notify user about the error.
             # TODO: reroute message to stakeholders.
@@ -95,7 +98,7 @@ class LLMMailConsumer(ThreadConsumer):
         )
         return chain_with_memory
 
-    async def _run_inference(self, thread_id: str, m: Message) -> None:
+    async def _run_inference(self, thread_id: str, m: Message) -> InferenceResult:
         ctx = ToolContext(thread_id, m)
         chain = self._build_chain(ctx)
         input_msg = {
@@ -108,4 +111,6 @@ class LLMMailConsumer(ThreadConsumer):
                 "session_id": thread_id,
             },
         }
-        await chain.ainvoke(input=input_msg, config=session_cfg)
+
+        # TODO: filter out AI thoughts (`<think>...</think>`) from the response.
+        return await chain.ainvoke(input=input_msg, config=session_cfg)

@@ -17,7 +17,6 @@ class ReplyToUserTool(BaseAsyncTool):
        Message body should contain just message text, no headers.
     """
     args_schema: Type[BaseModel] = ReplyToUserInput
-    # return_direct: bool = True
 
     _replyer: MailReplyer
     _context: ToolContext

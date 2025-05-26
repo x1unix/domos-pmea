@@ -31,13 +31,16 @@ Usually in that cases I just resort to checking examples by searching existing c
 
 In addition to that, during development I faced some issues which AI can't address or investigate. As example:
 
-* https://github.com/langchain-ai/langchain-redis/issues/67
+* <https://github.com/langchain-ai/langchain-redis/issues/67>
 
 ## Implementation Trade-offs
 
 Here is a list of things which I could do if I had more time:
 
 * **LLM:**
+  * Support reasoning models and filter out `<think>...</think>` and other artifacts.
+    * I tried to circumvent this by asking model to use a special `reply_to_user` tool but couldn't get reliable results.
+    * Some models like `qwen3` still made output to chat instead of using the tool.
   * Reroute message to stakeholder on error during message processing by AI.
   * Use embedding models to cache prompts.
   * Support attachments (pdf, jpg)
