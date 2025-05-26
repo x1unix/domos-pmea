@@ -34,11 +34,13 @@ class Application:
 
         threads_repo = ThreadsRepository(redis_client)
         mail_sender = MailSender(self._config.email, threads_repo)
-        llm_consumer = LLMMailConsumer(
-            config=ConsumerConfig(self._config.redis, self._config.chats),
-            replyer=mail_sender
+        consumer_config = ConsumerConfig(
+            redis=self._config.redis,
+            options=self._config.chats,
+            chat_model=self._config.llm.create_chat_model(),
         )
 
+        llm_consumer = LLMMailConsumer(consumer_config, mail_sender)
         listener_config = ListenerConfig(self._config.email, self._config.listener)
         self.listener = IncomingMailListener(
             config=listener_config,

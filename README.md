@@ -34,8 +34,10 @@ Usually in that cases I just resort to checking examples by searching existing c
 Here is a list of things which I could do if I had more time:
 
 * **LLM:**
+  * Reroute message to stakeholder on error during message processing by AI.
   * Use embedding models to cache prompts.
   * Support attachments (pdf, jpg)
+  * Stuff like `ConversationBufferMemory` are deprecated. Migrate to LangGraph.
 * **Mail processing:**
   * Dead letter queue to process unhandled incoming & outgoing messages is not implemented.
   * Outgoing messages are sent immediately. Ideally should be moved into a separate queue.
@@ -49,6 +51,7 @@ Here is a list of things which I could do if I had more time:
   * Migrate to pydantic v2. Atm it throws deprecation warnings as `@validator` is deprecated and aliased to v2 method.
   * Use dotenv and env vars for config instead of YAML.
     * Debugging which keys pydantic is actually reading takes a lot of time.
-* **Misc:**
-  * Tests!
+* **General:**
+  * E2E & Unit tests.
+  * Use connection pool for Redis.
   * Graceful shutdown.

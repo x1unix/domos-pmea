@@ -1,3 +1,4 @@
+"""LLM provider configuration."""
 import os
 from typing import Self
 from pydantic import Field, validator

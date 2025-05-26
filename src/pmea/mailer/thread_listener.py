@@ -1,3 +1,4 @@
+"""Provides functionality to map incoming messages to threads."""
 import logging
 from typing import Optional
 from pmea.repository.threads import ThreadsRepository
@@ -6,8 +7,8 @@ from .types import Message
 
 class ThreadConsumer:
     """Abstract interface to implement thread-aware mail listener."""
-    async def consume_thread_message(self, thread_id: str, message: Message) -> None:
-        pass
+    async def consume_thread_message(self, thread_id: str, m: Message) -> None:
+        """Handle new message in a thread."""
 
 class ThreadMailConsumer(MailConsumer):
     """MailConsumer interface implementation which assembles sequence of messages into a thread."""
@@ -26,16 +27,18 @@ class ThreadMailConsumer(MailConsumer):
         # If message already exists in a thread, skip it.
         thread_id = await self._threads_repo.get_message_thread_id(msg_id)
         if thread_id:
-            self._logger.info(f"Message {msg_id} already exists in thread {thread_id}")
+            self._logger.info("Message %s already exists in thread %s", msg_id, thread_id)
             await self._consumer.consume_thread_message(thread_id, m)
             return
 
         thread_id = await self._get_thread_id(m)
         if not thread_id:
             thread_id = self._threads_repo.new_thread_id()
-            self._logger.info(f"No thread found for message {msg_id}, creating new thread {thread_id}.")
+            self._logger.info(
+                "No thread found for message %s, creating new thread %s.", msg_id, thread_id,
+            )
         else:
-            self._logger.info(f"Found thread {thread_id} for message {msg_id}")
+            self._logger.info("Found thread %s for message %s", thread_id, msg_id)
         await self._threads_repo.add_thread_message(msg_id, thread_id)
         await self._consumer.consume_thread_message(thread_id, m)
 
