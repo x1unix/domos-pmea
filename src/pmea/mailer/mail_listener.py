@@ -199,6 +199,11 @@ class IncomingMailListener:
 
     async def _handle_message(self, uid: int, msg: message.Message):
         sender = Contact.parse(msg.get("From", ""))
+
+        # HACK: ignore messages from myself.
+        if sender.email == self._config.email_provider.username:
+            return
+
         if sender.email in self._config.options.ignore_addresses:
             self._logger.info(f"ignoring message from {sender.email}")
             return
