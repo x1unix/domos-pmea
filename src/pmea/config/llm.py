@@ -1,6 +1,6 @@
 """LLM provider configuration."""
 import os
-from typing import Self
+from typing import Callable, Self
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain_core.language_models import BaseChatModel
@@ -18,11 +18,11 @@ class LLMConfig(BaseSettings):
     provider: one of 'ollama' or 'google' (required)
     """
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    base_url: str = Field('', description="Base URL for the LLM service", env="LLM_BASE_URL")
-    provider: str = Field(..., description="LLM provider, one of 'ollama' or 'google'", env="LLM_PROVIDER")
-    api_key: str = Field('', description="API key for the LLM service", env="LLM_API_KEY")
-    model_name: str = Field(..., description="Model name to use", env="LLM_MODEL_NAME")
-    temperature: float = Field(0.7, description="Temperature for generation", env="LLM_TEMPERATURE")
+    base_url: str = Field(default='', description="Base URL for the LLM service")
+    provider: str = Field(..., description="LLM provider, one of 'ollama' or 'google'")
+    api_key: str = Field(default='', description="API key for the LLM service")
+    model_name: str = Field(..., description="Model name to use")
+    temperature: float = Field(default=0.7, description="Temperature for generation")
     model_kwarg: dict | None = Field(None, description="Additional keyword arguments to pass to the model")
 
     @validator("provider")
@@ -36,21 +36,21 @@ class LLMConfig(BaseSettings):
             return self
 
         if self.provider == AI_PROVIDER_GOOGLE and not self.api_key:
-            self.api_key = os.getenv("GOOGLE_API_KEY")
+            self.api_key = os.getenv("GOOGLE_API_KEY", "")
         if not self.api_key:
             raise ValueError(f"API key is required for provider {self.provider}")
         return self
 
-    def create_chat_model(self) -> BaseChatModel:
+    def get_model_provider(self) -> Callable[[], BaseChatModel]:
         if self.provider == AI_PROVIDER_GOOGLE:
-            return ChatGoogleGenerativeAI(
+            return lambda: ChatGoogleGenerativeAI(
                 google_api_key=self.api_key,
                 model=self.model_name,
                 temperature=self.temperature,
                 model_kwargs=self.model_kwarg,
             )
         elif self.provider == AI_PROVIDER_OLLAMA:
-            return ChatOllama(
+            return lambda: ChatOllama(
                 base_url=self.base_url or _DEFAULT_OLLAMA_URL,
                 model=self.model_name,
                 temperature=self.temperature,

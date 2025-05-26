@@ -13,41 +13,41 @@ logger = logging.getLogger(__name__)
 class ListenerOptions(BaseSettings):
     """Mail listener configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    worker_count: int = Field(1, description="Number of workers to handle messages", env="LISTENER_WORKER_COUNT")
-    msg_fetch_batch_size: int = Field(10, description="Number of messages to fetch per IMAP request", env="LISTENER_MSG_FETCH_BATCH_SIZE")
-    msg_queue_size: int = Field(10, description="Messages queue size", env="CONSUMER_QUEUE_SIZE")
-    ignore_addresses: set[str] = Field(default_factory=set, description="Addresses to ignore", env="LISTENER_IGNORE_ADDRESSES")
+    worker_count: int = Field(1, description="Number of workers to handle messages")
+    msg_fetch_batch_size: int = Field(10, description="Number of messages to fetch per IMAP request")
+    msg_queue_size: int = Field(10, description="Messages queue size")
+    ignore_addresses: set[str] = Field(default_factory=set, description="Addresses to ignore")
 
 class StorageConfig(BaseSettings):
     """Mock data storage configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    properties: Path = Field(..., description="Path to the properties database", env="TEST_DATA_PROPERTIES")
+    properties: Path = Field(..., description="Path to the properties database")
 
 class RedisConfig(BaseSettings):
     """Redis provider configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    dsn: str = Field(..., description="Redis DSN", env="REDIS_DSN")
+    dsn: str = Field(..., description="Redis DSN")
 
 class ChatsConfig(BaseSettings):
     """Chats behavior configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    ttl: int | None = Field(None, description="Redis key TTL", env="CHATS_TTL")
+    ttl: int | None = Field(None, description="Redis key TTL")
 
 class EmailConfig(BaseSettings):
     """Email provider configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    imap_host: str = Field(..., description="IMAP server hostname", env="IMAP_HOST")
-    imap_port: int = Field(993, description="IMAP server port", env="IMAP_PORT")
-    smtp_host: str = Field(..., description="SMTP server hostname", env="SMTP_HOST")
-    smtp_port: int = Field(587, description="SMTP server port", env="SMTP_PORT")
-    username: str = Field(..., description="Email account username", env="EMAIL_USERNAME")
-    password: str = Field(..., description="Email account password", env="EMAIL_PASSWORD")
-    use_ssl: bool = Field(True, description="Whether to use SSL for connections", env="EMAIL_USE_SSL")
-    mailbox: str = Field("INBOX", description="Mailbox to monitor", env="EMAIL_MAILBOX")
-    idle_timeout: int = Field(29 * 60, description="IMAP IDLE timeout in seconds (default: 29 minutes)", env="IMAP_IDLE_TIMEOUT")
-    reconnect_delay: int = Field(5, description="Delay in seconds before reconnecting after connection loss", env="IMAP_RECONNECT_DELAY")
-    reconnect_max_attempts: int = Field(3, description="Maximum number of reconnect attempts", env="IMAP_RECONNECT_MAX_ATTEMPTS")
-    msg_id_domain: str | None = Field(None, description="Domain to use for Message-ID header", env="EMAIL_MSG_ID_DOMAIN")
+    imap_host: str = Field(..., description="IMAP server hostname")
+    imap_port: int = Field(993, description="IMAP server port")
+    smtp_host: str = Field(..., description="SMTP server hostname")
+    smtp_port: int = Field(587, description="SMTP server port")
+    username: str = Field(..., description="Email account username")
+    password: str = Field(..., description="Email account password")
+    use_ssl: bool = Field(True, description="Whether to use SSL for connections")
+    mailbox: str = Field("INBOX", description="Mailbox to monitor")
+    idle_timeout: int = Field(29 * 60, description="IMAP IDLE timeout in seconds (default: 29 minutes)")
+    reconnect_delay: int = Field(5, description="Delay in seconds before reconnecting after connection loss")
+    reconnect_max_attempts: int = Field(3, description="Maximum number of reconnect attempts")
+    msg_id_domain: str | None = Field(None, description="Domain to use for Message-ID header")
 
     def with_defaults(self) -> Self: 
         if not self.msg_id_domain:
@@ -60,8 +60,8 @@ class EmailConfig(BaseSettings):
 class LoggerConfig(BaseSettings):
     """Logging configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    level: str = Field("INFO", description="Logging level", env="LOG_LEVEL")
-    file: Optional[Path] = Field(None, description="Path to log file", env="LOG_FILE")
+    level: str = Field("INFO", description="Logging level")
+    file: Optional[Path] = Field(None, description="Path to log file")
 
 class Config(BaseSettings):
     email: EmailConfig = Field(default_factory=EmailConfig)
