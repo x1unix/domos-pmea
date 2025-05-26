@@ -84,7 +84,7 @@ class Config(BaseSettings):
         self.llm = self.llm.with_defaults()
         return self
 
-def load_config() -> Config:
+def load_config_from_flags() -> Config:
     # TODO: figure out why env vars are not working.
     parser = argparse.ArgumentParser(description="Property Manager Email Assistant")
     parser.add_argument(
@@ -97,14 +97,14 @@ def load_config() -> Config:
     args, _ = parser.parse_known_args()
     if not args.config:
         raise Exception("No config file provided")
-    
-    if not os.path.exists(args.config):
-        raise Exception(f"Config file '{args.config}' doesn't exist.")
+    return load_config_from_file(Path(args.config))
 
-    with open(args.config, 'r') as file:
+def load_config_from_file(path: Path) -> Config:
+    if not os.path.exists(path):
+        raise Exception(f"Config file '{path}' doesn't exist.")
+    with open(path, 'r') as file:
         config_data = yaml.safe_load(file)
         return Config(**config_data).with_defaults()
-
 
 def setup_logging(config: LoggerConfig):
     # Clear any existing handlers on the root logger

@@ -21,13 +21,17 @@ Cursor was used to make this assignment. I tried mixing different models (Claude
 ### Upsides
 
 * gpt-4.1 proven to be the most safe model to use.
-* As a good point - autocomplete works perfectly and this is a real time saver.
+* Autocompletion is very convenient except cases where it misses the point.
 
 ### Downsides
 
 When dealing with a new domain (for me it was IMAP), I found that AI is often halucinating, giving a code that doesn't work.
 I had to manually debug a program to figure out how to properly implement a logic, using AI only for a concrete questions.
 Usually in that cases I just resort to checking examples by searching existing codebases in GitHub (they have a good search engine).
+
+In addition to that, during development I faced some issues which AI can't address or investigate. As example:
+
+* https://github.com/langchain-ai/langchain-redis/issues/67
 
 ## Implementation Trade-offs
 

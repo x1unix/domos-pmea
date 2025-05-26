@@ -1,22 +1,7 @@
-from textwrap import dedent
-from ..mailer import Message
-
-def build_error_response(thread_id: str, e: Exception) -> str:
-    msg = f"""
-    Sorry, I'm having trouble processing your message. Please try again later.
-
-    Thread ID: {thread_id}
-    Error: {e}
+def sanitize_session_id(session_id: str) -> str:
     """
+    Replaces dashes with underscores in session ID.
 
-    return dedent(msg)
-
-
-def message_to_prompt(m: Message) -> str:
-    prompt = f"""
-    Subject: {m.subject}
-
-    {m.body}
+    See https://github.com/langchain-ai/langchain-redis/issues/67 for context.
     """
-
-    return dedent(prompt)
+    return session_id.replace("-", "_")

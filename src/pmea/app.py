@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import redis.asyncio as aioredis
+from langchain_redis import RedisChatMessageHistory
 
 from pmea.agent.consumer import ConsumerConfig
+from pmea.agent.utils import sanitize_session_id
 from pmea.mailer.sender import MailSender
 from pmea.repository.threads import ThreadsRepository
 from .agent import LLMMailConsumer
-from .config import Config, load_config, setup_logging
+from .config import Config, load_config_from_flags, setup_logging
 from .mailer import ThreadMailConsumer, IncomingMailListener, ListenerConfig
 
 logger = logging.getLogger(__name__)
@@ -35,9 +37,15 @@ class Application:
         threads_repo = ThreadsRepository(redis_client)
         mail_sender = MailSender(self._config.email, threads_repo)
         consumer_config = ConsumerConfig(
-            redis=self._config.redis,
-            options=self._config.chats,
             chat_model=self._config.llm.create_chat_model(),
+            get_history=(lambda thread_id:
+                # TODO: use connection pool for Redis.
+                RedisChatMessageHistory(
+                    session_id=sanitize_session_id(thread_id),
+                    redis_url=self._config.redis.dsn,
+                    ttl=self._config.chats.ttl,
+                )
+            )
         )
 
         llm_consumer = LLMMailConsumer(consumer_config, mail_sender)
@@ -53,7 +61,7 @@ class Application:
 
     @staticmethod
     def create() -> 'Application': # Return type hint adjusted for forward reference
-        config = load_config()
+        config = load_config_from_flags()
         setup_logging(config.logging)
         
         # Call self (which is the class Application due to @staticmethod) to instantiate
