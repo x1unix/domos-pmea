@@ -3,10 +3,7 @@ from __future__ import annotations
 from typing import Optional, Type
 
 from pydantic import BaseModel, Field
-from langchain_core.callbacks import (
-    CallbackManagerForToolRun,
-    AsyncCallbackManagerForToolRun,
-)
+from langchain_core.callbacks import AsyncCallbackManagerForToolRun
 
 from .types import BaseAsyncTool, ToolContext, MailReplyer
 

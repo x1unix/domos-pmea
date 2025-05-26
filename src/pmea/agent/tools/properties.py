@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 import json
 import logging
 from typing import Optional, Type
@@ -86,7 +87,7 @@ class FindPropertiesTool(BaseAsyncTool):
             ctx_key = f"{self._context.thread_id}:{self._context.original_message.headers.msg_id}"
             try:
                 logger.info(
-                    "%s tool called: %s (params=%s; msg=%s)",
+                    "%s tool called: params=%s; msg=%s",
                     self.name,
                     { "address": address, "city": city, "tenant_name": tenant_name, "tenant_email": tenant_email },
                     ctx_key,
@@ -97,8 +98,8 @@ class FindPropertiesTool(BaseAsyncTool):
                     tenant_name=tenant_name,
                     tenant_email=tenant_email,
                 )
-                properties = await self._properties_store.find_properties(query)
-                return json.dumps({ "success": True, "data": properties if properties else [] })
+                properties = self._properties_store.find_properties(query)
+                return json.dumps({ "success": True, "data": [asdict(p) for p in properties] if properties else [] })
             except Exception as e:
                 logger.error(
                     "%s tool returned error: %s (params=%s; msg=%s)",
@@ -157,13 +158,13 @@ class GetPropertyByIdTool(BaseAsyncTool):
             ctx_key = f"{self._context.thread_id}:{self._context.original_message.headers.msg_id}"
             try:
                 logger.info(
-                    "%s tool called: %s (params=%s; msg=%s)",
+                    "%s tool called: params=%s; msg=%s",
                     self.name,
                     { "property_id": property_id },
                     ctx_key,
                 ) 
-                result = await self._properties_store.get_property_by_id(property_id)
-                return json.dumps({ "success": True, "data": result })
+                result = self._properties_store.get_property_by_id(property_id)
+                return json.dumps({ "success": True, "data": asdict(result) if result else None })
             except Exception as e:
                 logger.error(
                     "%s tool returned error: %s (params=%s; msg=%s)",
