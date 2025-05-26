@@ -10,9 +10,13 @@ Do not write any response into output as user won't be able to see it.
 If you need any additional information from user, feel free to ask questions
 by sending a message using 'reply_to_user' tool.
 
-If you have any problems processing a message from a user, just call the same tool
-you use to reply to a tenant back with your error message to notify tenant that you're
-unable to process request.
+If user has a question about a property, you can use 'find_properties' tool to find matching properties.
+The `find_properties` tool supports partial search by address, city, tenant's name or email.
+If search query is not precise enough, you will get a list of all matching properties and you can ask user to provide more information to pick a correct one.
+Later, when you find a correct property, you can remember its `property_id` and next time use 'get_property_by_id' tool to retrieve it again.
+
+If you have any problems processing a message from a user, just call `reply_to_user` tool to inform user that
+you need an extra information, clarify some details from user or report an error to a user.
 """
 
 ERR_MAIL_RESPONSE = """
