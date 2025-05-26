@@ -37,6 +37,11 @@ class MailSender:
         receiver = parent_msg.sender.email
         parent_msg_refs = parent_msg.headers.references
 
+        # Preserve own name in the reply.
+        from_addr = self._sender
+        if self._sender == parent_msg.receiver.email:
+            from_addr = parent_msg.receiver.to_addr()
+
         new_msg_refs = parent_msg_id
         if parent_msg_refs:
             new_msg_refs = f"{" ".join(parent_msg_refs)} {new_msg_refs}"
@@ -46,7 +51,7 @@ class MailSender:
         msg["Message-ID"] = msg_id
         msg["In-Reply-To"] = parent_msg_id
         msg["References"] = new_msg_refs
-        msg["From"] = self._sender
+        msg["From"] = from_addr
         msg["To"] = receiver
         msg["Subject"] = parent_msg.subject
         msg["X-PMEA-Thread-ID"] = thread_id # For debugging purposes.

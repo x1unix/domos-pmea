@@ -18,6 +18,9 @@ class Contact:
     def parse(raw_contact: str) -> Self:
         name, email = parseaddr(raw_contact)
         return Contact(name, email)
+    
+    def to_addr(self) -> str:
+        return f"{self.name} <{self.email}>" if self.name else self.email
 
 @dataclass
 class Message:
