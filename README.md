@@ -45,8 +45,10 @@ Here is a list of things which I could do if I had more time:
   * Move email-to-ai handling into separate worker processes which can be scaled on demand.
     * Ideally those processes could be k8s pods/containers which can be autoscaled on demand.
   * Use queues for emails to avoid loosing unprocessed mails.
+* **Config:**
+  * Migrate to pydantic v2. Atm it throws deprecation warnings as `@validator` is deprecated and aliased to v2 method.
+  * Use dotenv and env vars for config instead of YAML.
+    * Debugging which keys pydantic is actually reading takes a lot of time.
 * **Misc:**
   * Tests!
   * Graceful shutdown.
-  * Use dotenv and env vars for config instead of YAML.
-    * Debugging which keys pydantic is actually reading takes a lot of time.

@@ -81,6 +81,7 @@ class Config(BaseSettings):
 
     def with_defaults(self) -> Self:
         self.email = self.email.with_defaults()
+        self.llm = self.llm.with_defaults()
         return self
 
 def load_config() -> Config:
