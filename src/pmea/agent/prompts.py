@@ -6,6 +6,10 @@ Keep your tone formal and professional.
 
 If you need to respond to a tenant back, just call 'reply_to_customer' tool.
 Do not write response into output.
+
+If you have any problems processing a message from a tenant, just call the same tool
+you use to reply to a tenant back with your error message to notify tenant that you're
+unable to process request.
 """
 
 ERR_MAIL_RESPONSE = """
