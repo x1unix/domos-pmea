@@ -17,7 +17,7 @@ run: install-dev
 
 .PHONY: test
 test:
-	@uv run pytest -s -o log_cli_level=$(TEST_LOG_LEVEL)
+	@uv run pytest -s -o log_cli_level=$(TEST_LOG_LEVEL) $(PYTEST_ARGS)
 
 .PHONY: clean.redis
 clean.redis:
