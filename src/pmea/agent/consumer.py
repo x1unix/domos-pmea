@@ -4,6 +4,7 @@ from typing import Callable
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.language_models import BaseChatModel
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
@@ -75,9 +76,9 @@ class LLMMailConsumer(ThreadConsumer):
         """Builds a chain for the given thread and message."""
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", SYSTEM_PROMPT),
+                SystemMessage(content=SYSTEM_PROMPT),
                 MessagesPlaceholder(variable_name=MSG_HISTORY_KEY),
-                ("user", f"{{{MSG_INPUT_KEY}}}"),
+                HumanMessage(content=f"{{{MSG_INPUT_KEY}}}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
@@ -88,7 +89,7 @@ class LLMMailConsumer(ThreadConsumer):
         agent = AgentExecutor(agent=agent_runnable, tools=tools, verbose=True)
         chain_with_memory = RunnableWithMessageHistory(
             agent,
-            self._config.get_history,
+            get_session_history=self._config.get_history,
             input_messages_key=MSG_INPUT_KEY,
             history_messages_key=MSG_HISTORY_KEY,
         )

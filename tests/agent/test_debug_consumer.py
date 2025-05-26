@@ -14,8 +14,9 @@ from pmea.agent.utils import sanitize_session_id
 from pmea.config import LoggerConfig, LLMConfig, setup_logging
 from pmea.mailer import Message, Contact, MessageHeaders
 
-TEST_REDIS_DSN = "redis://localhost:6379/1"
-USE_REDIS = False
+TEST_REDIS_DSN = "redis://localhost:6379/0"
+USE_REDIS = True
+REDIS_FLUSH_BEFORE_TEST = False
 
 @dataclass
 class CollectedReply:
@@ -32,13 +33,10 @@ class MailReplyerMock(MailReplyer):
         logging.info(f"Received reply: {body}")
         self._replies.append(CollectedReply(thread_id, parent_msg, body))
 
-async def make_chat_history(thread_id: str, with_redis: bool = False) -> BaseChatMessageHistory:
-    if not with_redis:
+def make_chat_history(thread_id: str) -> BaseChatMessageHistory:
+    if not USE_REDIS:
         return InMemoryChatMessageHistory()
 
-    redis_client = aioredis.from_url(TEST_REDIS_DSN)
-    await redis_client.flushdb()
-    await redis_client.aclose()
     return RedisChatMessageHistory(
         # RedisChatMessageHistory throws AttributeError if redis_connection is used instead.
         # At: langchain_redis/chat_message_history.py:140
@@ -85,6 +83,11 @@ def iter_messages(subject: str, input: list[MessageInput]) -> Generator[Message,
 @pytest.mark.asyncio
 async def test_debug_ai_consumer():
     setup_logging(LoggerConfig(level="INFO"))
+    if USE_REDIS and REDIS_FLUSH_BEFORE_TEST:
+        redis_client = aioredis.from_url(TEST_REDIS_DSN)
+        await redis_client.flushdb()
+        await redis_client.aclose()
+
     thread_id = "f8d0ae53-fa12-418b-8736-3e2c75cf9902"
     messages: list[MessageInput] = [
        MessageInput(
@@ -99,22 +102,21 @@ async def test_debug_ai_consumer():
         ) 
     ]
     
+    replyer = MailReplyerMock()
     llm_config = LLMConfig(
         provider="ollama",
         model_name="qwen3:8b",
         temperature=0.4,
     )
     
-    history = await make_chat_history(thread_id, with_redis=USE_REDIS)
-    consumer_config = ConsumerConfig(
-        get_chat_model=llm_config.get_model_provider(),
-        get_history=(lambda _: history)
-    )
-
-    replyer = MailReplyerMock()
-    llm_consumer = LLMMailConsumer(consumer_config, CallToolsDependencies(replyer))
-
     for msg in iter_messages("Hello", messages):
+        consumer_config = ConsumerConfig(
+            get_chat_model=llm_config.get_model_provider(),
+            get_history=make_chat_history,
+        )
+
+        llm_consumer = LLMMailConsumer(consumer_config, CallToolsDependencies(replyer))
+
         await llm_consumer.consume_thread_message(thread_id, msg)
     replies = replyer.replies()
     assert len(replies) > 0
