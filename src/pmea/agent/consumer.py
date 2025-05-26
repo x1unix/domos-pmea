@@ -20,4 +20,4 @@ class LLMMailConsumer(ThreadConsumer):
         self._logger.info(
             f"Thread {thread_id}: New email: uid={m.uid}; from={m.sender}; to={m.receiver}; dt={m.sent_at}; subj={m.subject};"
         )
-        self._logger.info(f"body: {m.body}")
+        self._logger.info(f"body: {m.body[:64]}")

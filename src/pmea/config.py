@@ -46,6 +46,7 @@ class EmailConfig(BaseSettings):
     mailbox: str = Field("INBOX", description="Mailbox to monitor", env="EMAIL_MAILBOX")
     idle_timeout: int = Field(29 * 60, description="IMAP IDLE timeout in seconds (default: 29 minutes)", env="IMAP_IDLE_TIMEOUT")
     reconnect_delay: int = Field(5, description="Delay in seconds before reconnecting after connection loss", env="IMAP_RECONNECT_DELAY")
+    reconnect_max_attempts: int = Field(3, description="Maximum number of reconnect attempts", env="IMAP_RECONNECT_MAX_ATTEMPTS")
 
 class LLMConfig(BaseSettings):
     """LLM provider configuration"""

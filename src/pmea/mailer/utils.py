@@ -6,8 +6,11 @@ from typing import Generator, Optional
 
 from pmea.mailer.types import MessageHeaders
 
-UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)')
-UIDNEXT_RX_LINE = re.compile(r"^OK \[UIDNEXT (\d+)\]")
+RE_UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)')
+RE_UIDNEXT_RX_LINE = re.compile(r"^OK \[UIDNEXT (\d+)\]")
+RE_SERVER_PUSH_EXISTS_LINE = re.compile(r"^[\d]+ EXISTS$")
+RE_FETCH_FLAGS_LINE = re.compile(r"^[\d]+ FETCH \(UID [\d]+ FLAGS")
+
 MAIL_RSP_LINES_COUNT = 3
 
 def uid_from_fetch_line(line: bytes) -> int | None:
@@ -16,7 +19,7 @@ def uid_from_fetch_line(line: bytes) -> int | None:
         line_str = line.decode("utf-8", errors="replace")
     except Exception:
         return None
-    match = UID_RX_LINE.match(line_str)
+    match = RE_UID_RX_LINE.match(line_str)
     if not match:
         return None
     try:
@@ -35,6 +38,18 @@ def parse_msg_payload(msg: message.Message) -> str | None:
             return part.get_payload(decode=True).decode('utf-8')
     return None
 
+def cut_fetch_flags_suffix(lines: list[bytes]) -> list[bytes]:
+    skip_count = 0
+    for line in reversed(lines):
+        if isinstance(line, bytearray):
+            break
+        line_str = line.decode("utf-8", errors="replace")
+        if RE_FETCH_FLAGS_LINE.match(line_str):
+            skip_count += 1
+            continue
+        break
+    return lines if not skip_count else lines[:-skip_count]
+
 # A list contains combined contents of all messages + enclosing 'Success' line.
 def iter_messages(msgs_response: list[bytes]) -> Generator[tuple[int, message.Message], None]:
     """Returns an async iterator to traverse over batch messages response"""
@@ -42,12 +57,29 @@ def iter_messages(msgs_response: list[bytes]) -> Generator[tuple[int, message.Me
         return
 
     # Last element should be 'Success' line.
-    # Rest is (header, payload, ending) chunk of each message.
+    # Rest: there are 2 potential cases:
+    # 1. If done outside of IDLE loop: 
+    #    header: 'x FETCH (UID y RFC8222 {size})'
+    #    payload: <bytearray>
+    #    ending:')'
+    # 2. After IDLE loop:
+    #    header: 'x FETCH (UID y RFC8222 {size})'
+    #    payload: <bytearray>
+    #    ending: ' FLAGS (\Seen)'
+    #    ...
+    #    flags for each message before 'Success' line:
+    #    'x FETCH (UID y FLAGS (\Seen))'  - for each message at bottom
     last_line = msgs_response[-1]
     if not last_line.startswith(b'Success'):
         raise Exception(f"unexpected response end: {last_line}")
 
+    # Trim 'Success' line.
     msgs_response = msgs_response[:-1]
+
+    # Check for second case - trim 'x FETCH' suffixes.
+    # Flags there allow checking if message is seen but atm they're not needed.
+    msgs_response = cut_fetch_flags_suffix(msgs_response)
+
     if len(msgs_response) % MAIL_RSP_LINES_COUNT != 0:
         raise Exception(f"response lines not divisible by {MAIL_RSP_LINES_COUNT}, got {len(msgs_response)}")
 
@@ -76,10 +108,15 @@ def uidnext_from_select_response(lines: list[bytes]) -> Optional[int]:
     for line in lines:
         if not line.startswith(b'OK'):
             continue
-        match = UIDNEXT_RX_LINE.match(line.decode("utf-8", errors="replace"))
+        match = RE_UIDNEXT_RX_LINE.match(line.decode("utf-8", errors="replace"))
         if match:
             return int(match.group(1))
     return None
+
+def is_server_push_exists_result(lines: list[bytes]) -> bool:
+    if not lines:
+        return False
+    return RE_SERVER_PUSH_EXISTS_LINE.match(lines[0].decode("utf-8", errors="replace")) is not None
 
 def assert_ok(code: str, msg: str) -> None:
     if code != "OK":

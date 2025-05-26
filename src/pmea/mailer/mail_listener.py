@@ -5,7 +5,7 @@ from aioimaplib import aioimaplib
 from dataclasses import dataclass
 import logging
 from ..config import EmailConfig, ListenerOptions
-from .utils import assert_ok, iter_messages, parse_message_headers, parse_msg_payload, uid_from_fetch_line, uidnext_from_select_response
+from .utils import assert_ok, is_server_push_exists_result, iter_messages, parse_message_headers, parse_msg_payload, uid_from_fetch_line, uidnext_from_select_response
 from email.utils import parsedate_to_datetime
 from email import message
 from .types import Contact, Message
@@ -60,28 +60,48 @@ class IncomingMailListener:
             return 0
         return last_uid
 
-    async def _connect_and_idle(self):
+    async def _connect(self):
+        if self._client is not None:
+            await self._client.logout()
+            await self._client.close()
+            self._client = None
+
         ssl = self._config.email_provider.use_ssl
         imap_host = self._config.email_provider.imap_host
         imap_port = self._config.email_provider.imap_port
-        try:
-            # TODO: add retry logic.
-            self._logger.info("connecting to IMAP server...")
-            if ssl:
-                self._client = aioimaplib.IMAP4_SSL(imap_host, imap_port)
-            else:
-                self._client = aioimaplib.IMAP4(imap_host, imap_port)
+        max_attempts = self._config.email_provider.reconnect_max_attempts
+        last_attempt = max_attempts - 1
+        for attempt in range(max_attempts):
+            try:
+                if attempt > 0:
+                    self._logger.info(f"reconnecting to IMAP server [attempt {attempt + 1}/{max_attempts}]...")
+                else:
+                    self._logger.info("connecting to IMAP server...")
 
-            await self._client.wait_hello_from_server()
-            code, rsp = await self._client.login(
-                self._config.email_provider.username,
-                self._config.email_provider.password,
-            )
-            if code != "OK":
-                raise Exception(f"can't login to IMAP server: {rsp} (code: {code})")
-        except Exception as e:
-            self._logger.error(f"can't connect to IMAP server: {e}", exc_info=True)
-            raise
+                if ssl:
+                    client = aioimaplib.IMAP4_SSL(imap_host, imap_port)
+                else:
+                    client = aioimaplib.IMAP4(imap_host, imap_port)
+
+                await client.wait_hello_from_server()
+                code, rsp = await client.login(
+                    self._config.email_provider.username,
+                    self._config.email_provider.password,
+                )
+                if code != "OK":
+                    client.close()
+                    raise Exception(f"can't login to IMAP server: {rsp} (code: {code})")
+                
+                self._client = client
+                return
+            except Exception as e:
+                self._logger.error(f"can't connect to IMAP server: {e} (attempt {attempt + 1}/{max_attempts})", exc_info=True)
+                if attempt == last_attempt:
+                    raise
+                await asyncio.sleep(self._config.email_provider.reconnect_delay)
+
+    async def _connect_and_idle(self):
+        await self._connect()
 
         # Fetch messages that were missed while offline.
         self._logger.info("fetching missed messages...")
@@ -146,28 +166,20 @@ class IncomingMailListener:
             await self._msg_queue.put((uid, msg))
 
     async def _idle_loop(self):
-        # TODO: this panics on a new mail, fix it later.
-        reconnect_delay = self._config.email_provider.reconnect_delay
         idle_timeout = self._config.email_provider.idle_timeout
-
         while self._running:
             try:
                 await self._client.idle_start(timeout=idle_timeout)
                 push = await self._client.wait_server_push()
-                await self._client.idle_done()
+                self._client.idle_done()
 
-                if not UID_RX.match(push.lines[0]):
+                if not is_server_push_exists_result(push):
                     continue
 
                 await self._fetch_messages()
             except Exception as e:
                 self._logger.error(f"Error in IMAP idle loop: {e}", exc_info=True)
-                await asyncio.sleep(reconnect_delay)
-                try:
-                    await self._connect_and_idle()
-                except Exception as conn_e:
-                    self._logger.error(f"reconnection failed: {conn_e}", exc_info=True)
-                    await asyncio.sleep(reconnect_delay)
+                await self._connect()
 
     async def _start_consumers(self):
         for i in range(self._config.options.worker_count):
