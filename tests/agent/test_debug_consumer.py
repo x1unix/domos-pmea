@@ -33,9 +33,10 @@ class MailReplyerMock(MailReplyer):
         logging.info(f"Received reply: {body}")
         self._replies.append(CollectedReply(thread_id, parent_msg, body))
 
+in_mem_history = InMemoryChatMessageHistory()
 def make_chat_history(thread_id: str) -> BaseChatMessageHistory:
     if not USE_REDIS:
-        return InMemoryChatMessageHistory()
+        return in_mem_history
 
     return RedisChatMessageHistory(
         # RedisChatMessageHistory throws AttributeError if redis_connection is used instead.
@@ -110,6 +111,7 @@ async def test_debug_ai_consumer():
     )
     
     for msg in iter_messages("Hello", messages):
+        # Memory and model instance have to be recreated for each message to get history working.
         consumer_config = ConsumerConfig(
             get_chat_model=llm_config.get_model_provider(),
             get_history=make_chat_history,

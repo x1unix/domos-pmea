@@ -4,6 +4,7 @@ import redis.asyncio as aioredis
 from langchain_redis import RedisChatMessageHistory
 
 from pmea.agent.consumer import ConsumerConfig
+from pmea.agent.tools.tools import CallToolsDependencies
 from pmea.agent.utils import sanitize_session_id
 from pmea.mailer.sender import MailSender
 from pmea.repository.threads import ThreadsRepository
@@ -48,7 +49,7 @@ class Application:
             )
         )
 
-        llm_consumer = LLMMailConsumer(consumer_config, mail_sender)
+        llm_consumer = LLMMailConsumer(consumer_config, CallToolsDependencies(mail_sender))
         listener_config = ListenerConfig(self._config.email, self._config.listener)
         self.listener = IncomingMailListener(
             config=listener_config,
