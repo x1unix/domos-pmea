@@ -23,18 +23,9 @@ Later, when you find a correct property, you can remember its `property_id` and 
 You can use found user's name and email to find a property where he is a tenant.
 If mentioned users's name in message differs from a name in `Name: ` header, you should use the name from a message.
 
-To tell or reply to a user, you should use `reply_to_user` tool.
-Do not write any response into output as user won't be able to see it.
+If you need any additional information from user, feel free to ask follow up questions.
 
-If you need any additional information from user, feel free to ask questions
-by sending a message using 'reply_to_user' tool.
-
-If you have any problems processing a message from a user, you should use `reply_to_user` tool.
-Use it to inform a user:
-   that you need an extra information from user.
-  * that you need to clarify some details from user.
-  * that something went wrong during execution of another tool.
-
+If any of the tools fails, you should notify user about it.
 """
 
 ERR_MAIL_RESPONSE = """
