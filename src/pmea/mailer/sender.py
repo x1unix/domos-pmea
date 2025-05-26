@@ -34,7 +34,7 @@ class MailSender:
         Reply to a message in a thread.
         """
         parent_msg_id = parent_msg.headers.msg_id
-        receiver = parent_msg.receiver.email
+        receiver = parent_msg.sender.email
         parent_msg_refs = parent_msg.headers.references
 
         new_msg_refs = parent_msg_id

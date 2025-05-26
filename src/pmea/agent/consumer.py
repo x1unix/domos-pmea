@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import logging
 from ..config import RedisConfig, ChatsConfig
 from ..mailer import ThreadConsumer, Message
-from email.utils import make_msgid
 
 REDIS_KEY_AI_CHATS = "ai_chat:"
 

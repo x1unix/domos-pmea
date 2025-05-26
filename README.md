@@ -37,8 +37,6 @@ Here is a list of things which I could do if I had more time:
   * Use embedding models to cache prompts.
   * Support attachments (pdf, jpg)
 * **Mail processing:**
-  * Although IMAP listener monitors only INBOX folder, it still gets messages sent by itself.
-    * As a hack: currently it just ignores messages where `From` is current email address.
   * Dead letter queue to process unhandled incoming & outgoing messages is not implemented.
   * Outgoing messages are sent immediately. Ideally should be moved into a separate queue.
   * Parallel mail downloads are not supported.
