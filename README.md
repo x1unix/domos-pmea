@@ -41,13 +41,7 @@ Here is a list of things which I could do if I had more time:
   * Parallel mail downloads are not supported.
   * IDLE loop server push occurs after 1 minute for some reason.
 * **Chats:**
-  * Maintain a whole conversation per topic. Possible solutions:
-    * Persist in DB (Redis or other) + TTL.
-    * Just follow quoted replies in a mail itself.
-  * Identify each topic by adding conversation ID. Possible solitions:
-    * Custom header isn't an option as it will be lost when client replies to agent.
-    * Plus tag in reply email is easiest solution. E.g `agent+[chat_id]@gmail.com`
-  * Move email handling into separate worker processes which can be scaled on demand.
+  * Move email-to-ai handling into separate worker processes which can be scaled on demand.
     * Ideally those processes could be k8s pods/containers which can be autoscaled on demand.
   * Use queues for emails to avoid loosing unprocessed mails.
 * **Misc:**
