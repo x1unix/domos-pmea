@@ -1,33 +1,23 @@
-import datetime
 import logging
-from asyncio import Protocol
 from dataclasses import dataclass
 from typing import Callable
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.language_models import BaseChatModel
+from langchain.agents import create_tool_calling_agent, AgentExecutor
 
-from pmea.mailer.types import Contact, MessageHeaders
-
-from .prompts import SYSTEM_PROMPT, build_error_response, message_to_prompt
 from ..mailer import ThreadConsumer, Message
+from .prompts import SYSTEM_PROMPT, build_error_response, message_to_prompt
+from .tools import CallToolsDependencies, build_call_tools, ToolContext
 
 MSG_HISTORY_KEY = "history"  # For openai - "chat_history"
-MSG_TEXT_KEY = "text"
-
-
-class MailReplyer(Protocol):
-    async def reply_in_thread(
-        self, thread_id: str, parent_msg: Message, body: str
-    ) -> None:
-        """Sends a mail reply to the given thread."""
-
+MSG_INPUT_KEY = "input"
+# MSG_INPUT_KEY = "text"
 
 @dataclass
 class ConsumerConfig:
-    chat_model: BaseChatModel
+    get_chat_model: Callable[[], BaseChatModel]
     get_history: Callable[[str], BaseChatMessageHistory]
 
 
@@ -35,11 +25,11 @@ class LLMMailConsumer(ThreadConsumer):
     """Routes incoming email threads to LLM."""
 
     _logger: logging.Logger = logging.getLogger(__name__)
-    _replyer: MailReplyer
+    _deps: CallToolsDependencies
     _config: ConsumerConfig
 
-    def __init__(self, config: ConsumerConfig, replyer: MailReplyer):
-        self._replyer = replyer
+    def __init__(self, config: ConsumerConfig, deps: CallToolsDependencies):
+        self._deps = deps
         self._config = config
 
     async def consume_thread_message(self, thread_id: str, m: Message) -> None:
@@ -54,13 +44,13 @@ class LLMMailConsumer(ThreadConsumer):
         self._logger.info("Msg: %s:%s; Request:\n%s", thread_id, m.uid, m.body)
 
         try:
-            response = await self._run_inference(thread_id, m)
-            self._logger.info("Msg: %s:%s; Response:\n%s", thread_id, m.uid, response)
+            await self._run_inference(thread_id, m)
+            self._logger.info("Msg: %s:%s; inference done", thread_id, m.uid)
         except Exception as e:
             await self._handle_error(e, thread_id, m)
             raise e
 
-        await self._replyer.reply_in_thread(thread_id, m, response)
+        # await self._replyer.reply_in_thread(thread_id, m, response)
 
     async def _handle_error(self, err: Exception, thread_id: str, m: Message) -> None:
         try:
@@ -72,7 +62,7 @@ class LLMMailConsumer(ThreadConsumer):
                 thread_id,
                 m.headers.msg_id,
             )
-            await self._replyer.reply_in_thread(
+            await self._deps.replyer.reply_in_thread(
                 thread_id, m, build_error_response(thread_id, err)
             )
         except Exception as e:
@@ -81,29 +71,34 @@ class LLMMailConsumer(ThreadConsumer):
                 e, thread_id, m.headers.msg_id,
             )
 
-    def _build_chain(self) -> RunnableWithMessageHistory:
+    def _build_chain(self, ctx: ToolContext) -> RunnableWithMessageHistory:
         """Builds a chain for the given thread and message."""
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", SYSTEM_PROMPT),
                 MessagesPlaceholder(variable_name=MSG_HISTORY_KEY),
-                ("human", f"{{{MSG_TEXT_KEY}}}"),
+                ("user", f"{{{MSG_INPUT_KEY}}}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
-
-        base_chain = prompt | self._config.chat_model | StrOutputParser()
+        # TODO: refactor to make tools stateless.
+        tools = build_call_tools(ctx, self._deps)
+        model = self._config.get_chat_model()
+        agent_runnable = create_tool_calling_agent(prompt=prompt, llm=model, tools=tools)
+        agent = AgentExecutor(agent=agent_runnable, tools=tools, verbose=True)
         chain_with_memory = RunnableWithMessageHistory(
-            base_chain,
+            agent,
             self._config.get_history,
-            input_messages_key=MSG_TEXT_KEY,
+            input_messages_key=MSG_INPUT_KEY,
             history_messages_key=MSG_HISTORY_KEY,
         )
         return chain_with_memory
 
-    async def _run_inference(self, thread_id: str, m: Message) -> str:
-        chain = self._build_chain()
+    async def _run_inference(self, thread_id: str, m: Message) -> None:
+        ctx = ToolContext(thread_id, m)
+        chain = self._build_chain(ctx)
         input_msg = {
-            MSG_TEXT_KEY: message_to_prompt(thread_id, m),
+            MSG_INPUT_KEY: message_to_prompt(thread_id, m),
         }
 
         session_cfg = {
@@ -112,4 +107,4 @@ class LLMMailConsumer(ThreadConsumer):
                 "session_id": thread_id,
             },
         }
-        return await chain.ainvoke(input=input_msg, config=session_cfg)
+        await chain.ainvoke(input=input_msg, config=session_cfg)

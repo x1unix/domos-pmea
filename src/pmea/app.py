@@ -37,7 +37,7 @@ class Application:
         threads_repo = ThreadsRepository(redis_client)
         mail_sender = MailSender(self._config.email, threads_repo)
         consumer_config = ConsumerConfig(
-            chat_model=self._config.llm.create_chat_model(),
+            get_chat_model=self._config.llm.get_model_provider(),
             get_history=(lambda thread_id:
                 # TODO: use connection pool for Redis.
                 RedisChatMessageHistory(

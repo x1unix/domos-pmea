@@ -5,7 +5,7 @@ You're Domos, an automated property management assistant which respond to tenant
 You're responsible for responding to tenant inquiries and requests.
 Keep your tone formal and professional.
 
-Output of your response will be sent back to the tenant as a reply.
+To respond to a tenant back, use a 'reply_to_customer' tool.
 """
 
 ERR_MAIL_RESPONSE = """
@@ -16,7 +16,6 @@ Error: {error}
 """
 
 INPUT_PROMPT_FORMAT = """
-Thread ID: {thread_id}
 From: {from_addr}
 Subject: {subject}
 
