@@ -1,5 +1,6 @@
 PKG_NAME=domos-pmea
 CONFIG_FILE=config.yml
+REDIS_CONTAINER_NAME=pmea-redis
 
 .PHONY: venv
 venv:
@@ -13,6 +14,15 @@ install-dev: venv
 run: install-dev
 	@uv run $(PKG_NAME) --config $(CONFIG_FILE)
 
-.PHONY: clean
-clean:
+.PHONY: clean.redis
+clean.redis:
+	@docker exec $(REDIS_CONTAINER_NAME) redis-cli 'FLUSHDB'
+
+.PHONY: clean.files
+clean.files:
 	@rm -rf .venv __pycache__ .pytest_cache .mypy_cache dist build *.egg-info
+
+.PHONY: clean
+clean: clean.redis clean.files
+	@echo 'Removed all temp files and Redis data'
+
