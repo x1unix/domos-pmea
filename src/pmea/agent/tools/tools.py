@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from langchain_core.tools import BaseTool
-from .reply_to_customer import ReplyToCustomerTool
+from .reply_to_user import ReplyToCustomerTool
 from .types import ToolContext, MailReplyer
 
 @dataclass
