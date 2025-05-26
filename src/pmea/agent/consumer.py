@@ -1,23 +1,23 @@
 from dataclasses import dataclass
 import logging
 from ..config import RedisConfig, ChatsConfig
-from ..mailer import MailConsumer, Message
+from ..mailer import ThreadConsumer, Message
 
 @dataclass
 class ConsumerConfig:
     redis: RedisConfig
     options: ChatsConfig
 
-def chat_id_from_mail(m: Message) -> str:
-    return f"{m.sender}-{m.receiver}"
-
-class Consumer(MailConsumer):
+class LLMMailConsumer(ThreadConsumer):
+    """Routes incoming email threads to LLM."""
     _logger: logging.Logger = logging.getLogger(__name__)
     _config: ConsumerConfig
 
     def __init__(self, config: ConsumerConfig):
         self._config = config
 
-    async def consume_mail(self, m: Message):
-        self._logger.info(f"New email received: from={m.sender}; to={m.receiver}; dt={m.sent_at}; subj={m.subject};")
+    async def consume_thread_message(self, thread_id: str, m: Message) -> None:
+        self._logger.info(
+            f"Thread {thread_id}: New email: from={m.sender}; to={m.receiver}; dt={m.sent_at}; subj={m.subject};"
+        )
         self._logger.info(f"body: {m.body}")

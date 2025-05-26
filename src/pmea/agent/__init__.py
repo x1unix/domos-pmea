@@ -1,3 +1,3 @@
-from .consumer import Consumer
+from .consumer import LLMMailConsumer
 
-__all__ = ["Consumer"]
+__all__ = ["LLMMailConsumer"]

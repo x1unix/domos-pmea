@@ -1,21 +1,20 @@
 import asyncio
 import logging
+import redis.asyncio as aioredis
 
 from pmea.agent.consumer import ConsumerConfig
-from .agent import Consumer
+from pmea.repository.threads import ThreadsRepository
+from .agent import LLMMailConsumer
 from .config import Config, load_config, setup_logging
-from .mailer import IncomingMailListener, ListenerConfig
+from .mailer import ThreadMailConsumer, IncomingMailListener, ListenerConfig
 
 logger = logging.getLogger(__name__)
 
 class Application:
     listener: IncomingMailListener
+    _config: Config
     def __init__(self, config: Config):
-        self.config = config
-
-        msg_consumer = Consumer(ConsumerConfig(config.redis, config.chats))
-        listener_config = ListenerConfig(config.email, config.listener)
-        self.listener = IncomingMailListener(listener_config, msg_consumer)
+        self._config = config
 
     def main(self):
         logger.info(f"starting service...")
@@ -26,6 +25,16 @@ class Application:
             return
 
     async def _run(self):
+        redis_client = aioredis.from_url(self._config.redis.dsn)
+        try:
+            await redis_client.ping()
+        except Exception as e:
+            raise Exception(f"failed to connect to Redis: {e}")
+
+        threads_repo = ThreadsRepository(redis_client)
+        llm_consumer = LLMMailConsumer(ConsumerConfig(self._config.redis, self._config.chats))
+        listener_config = ListenerConfig(self._config.email, self._config.listener)
+        self.listener = IncomingMailListener(listener_config, ThreadMailConsumer(llm_consumer, threads_repo))
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self.listener.start())
 
