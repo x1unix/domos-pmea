@@ -46,6 +46,10 @@ Here is a list of things which I could do if I had more time:
   * Support attachments (pdf, jpg)
   * Stuff like `ConversationBufferMemory` are deprecated. Migrate to LangGraph.
 * **Mail processing:**
+  * Email clients in threads include reply quotes which need to be removed before processing because:
+      * Bloat AI context with unecessary data.
+      * Can impact on result and confuse LLM.
+      * I tried to solve this myself but even [mail-parser-reply](https://github.com/alfonsrv/mail-parser-reply) doesn't handle Gmail cases well, especially if thread was done between different mail agents.
   * Dead letter queue to process unhandled incoming & outgoing messages is not implemented.
   * Outgoing messages are sent immediately. Ideally should be moved into a separate queue.
   * Parallel mail downloads are not supported.
