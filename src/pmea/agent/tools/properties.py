@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import json
@@ -39,6 +38,7 @@ class PropertyInfo(BaseModel):
 
 class FindPropertiesTool(BaseAsyncTool):
     name: str = "find_properties"
+    args_schema: Type[BaseModel] = FindPropertyInput
     description: str = (
         "Tool to use for assistant to find matching properties (apartments) by address or city or tenant's name or email"
         "If you don't have enough or precise information, you can try partial search by providing only part of the information."
@@ -66,12 +66,12 @@ class FindPropertiesTool(BaseAsyncTool):
         "}"
         "```"
     )
-    args_schema: Type[BaseModel] = FindPropertyInput
 
     _properties_store: PropertiesStore
     _context: ToolContext
     
     def __init__(self, context: ToolContext, properties_store: PropertiesStore):
+        super().__init__()
         self._context = context
         self._properties_store = properties_store
     
@@ -113,6 +113,7 @@ class GetPropertyByIdInput(BaseModel):
 
 class GetPropertyByIdTool(BaseAsyncTool):
     name: str = "get_property_by_id"
+    args_schema: Type[BaseModel] = GetPropertyByIdInput
     description: str = (
         "Tool returns property information by property ID."
         "This tool can be used instead of find_properties if you know exact property ID."
@@ -139,12 +140,12 @@ class GetPropertyByIdTool(BaseAsyncTool):
         "}"
         "```"
     )
-    args_schema: Type[BaseModel] = GetPropertyByIdInput
 
     _properties_store: PropertiesStore
     _context: ToolContext
     
     def __init__(self, context: ToolContext, properties_store: PropertiesStore):
+        super().__init__()
         self._context = context
         self._properties_store = properties_store
     
