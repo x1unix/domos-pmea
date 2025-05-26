@@ -1,11 +1,12 @@
-from pydantic import Field, field_validator
-from typing import Optional, Self
-from pathlib import Path
 import argparse
 import os
 import logging
-from pydantic_settings import BaseSettings, SettingsConfigDict
 import yaml
+from pydantic import Field
+from typing import Optional, Self
+from pathlib import Path
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from .llm import LLMConfig
 
 logger = logging.getLogger(__name__)
 
@@ -55,25 +56,6 @@ class EmailConfig(BaseSettings):
                 raise ValueError(f"cannot extract domain from username: {self.username}")
             self.msg_id_domain = parts[-1]
         return self
-
-
-class LLMConfig(BaseSettings):
-    """LLM provider configuration
-    provider: one of 'ollama' or 'google' (required)
-    """
-    model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    provider: str = Field(..., description="LLM provider, one of 'ollama' or 'google'", env="LLM_PROVIDER")
-    api_key: str = Field(..., description="API key for the LLM service", env="LLM_API_KEY")
-    model_name: str = Field(..., description="Model name to use", env="LLM_MODEL_NAME")
-    temperature: float = Field(0.7, description="Temperature for generation", env="LLM_TEMPERATURE")
-
-    @field_validator('provider')
-    @classmethod
-    def validate_provider(cls, value):
-        allowed = {"ollama", "google"}
-        if value not in allowed:
-            raise ValueError(f"provider must be one of {allowed}, got '{value}'")
-        return value
 
 class LoggerConfig(BaseSettings):
     """Logging configuration"""
