@@ -1,6 +1,7 @@
 PKG_NAME=domos-pmea
 CONFIG_FILE=config.yml
 REDIS_CONTAINER_NAME=pmea-redis
+TEST_LOG_LEVEL=INFO
 
 .PHONY: venv
 venv:
@@ -13,6 +14,10 @@ install-dev: venv
 .PHONY: run
 run: install-dev
 	@uv run $(PKG_NAME) --config $(CONFIG_FILE)
+
+.PHONY: test
+test:
+	@uv run pytest -s -o log_cli_level=$(TEST_LOG_LEVEL)
 
 .PHONY: clean.redis
 clean.redis:
