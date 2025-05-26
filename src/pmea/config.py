@@ -1,5 +1,5 @@
 from pydantic import Field
-from typing import Optional
+from typing import Optional, Self
 from pathlib import Path
 import argparse
 import os
@@ -30,7 +30,6 @@ class RedisConfig(BaseSettings):
 class ChatsConfig(BaseSettings):
     """Chats behavior configuration"""
     model_config = SettingsConfigDict(extra="ignore", env_prefix="")
-    redis_key_prefix: str | None = Field(None, description="Redis key prefix", env="CHATS_REDIS_KEY_PREFIX")
     ttl: int | None = Field(None, description="Redis key TTL", env="CHATS_TTL")
 
 class EmailConfig(BaseSettings):
@@ -47,6 +46,16 @@ class EmailConfig(BaseSettings):
     idle_timeout: int = Field(29 * 60, description="IMAP IDLE timeout in seconds (default: 29 minutes)", env="IMAP_IDLE_TIMEOUT")
     reconnect_delay: int = Field(5, description="Delay in seconds before reconnecting after connection loss", env="IMAP_RECONNECT_DELAY")
     reconnect_max_attempts: int = Field(3, description="Maximum number of reconnect attempts", env="IMAP_RECONNECT_MAX_ATTEMPTS")
+    msg_id_domain: str | None = Field(None, description="Domain to use for Message-ID header", env="EMAIL_MSG_ID_DOMAIN")
+
+    def with_defaults(self) -> Self: 
+        if not self.msg_id_domain:
+            parts = self.username.split("@")
+            if len(parts) < 2:
+                raise ValueError(f"cannot extract domain from username: {self.username}")
+            self.msg_id_domain = parts[-1]
+        return self
+
 
 class LLMConfig(BaseSettings):
     """LLM provider configuration"""
@@ -77,6 +86,9 @@ class Config(BaseSettings):
         env_prefix="",
     )
 
+    def with_defaults(self) -> Self:
+        self.email = self.email.with_defaults()
+        return self
 
 def load_config() -> Config:
     # TODO: figure out why env vars are not working.
@@ -97,7 +109,7 @@ def load_config() -> Config:
 
     with open(args.config, 'r') as file:
         config_data = yaml.safe_load(file)
-        return Config(**config_data)
+        return Config(**config_data).with_defaults()
 
 
 def setup_logging(config: LoggerConfig):

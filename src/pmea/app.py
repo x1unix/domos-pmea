@@ -3,6 +3,7 @@ import logging
 import redis.asyncio as aioredis
 
 from pmea.agent.consumer import ConsumerConfig
+from pmea.mailer.sender import MailSender
 from pmea.repository.threads import ThreadsRepository
 from .agent import LLMMailConsumer
 from .config import Config, load_config, setup_logging
@@ -32,7 +33,12 @@ class Application:
             raise Exception(f"failed to connect to Redis: {e}")
 
         threads_repo = ThreadsRepository(redis_client)
-        llm_consumer = LLMMailConsumer(ConsumerConfig(self._config.redis, self._config.chats))
+        mail_sender = MailSender(self._config.email, threads_repo)
+        llm_consumer = LLMMailConsumer(
+            config=ConsumerConfig(self._config.redis, self._config.chats),
+            replyer=mail_sender
+        )
+
         listener_config = ListenerConfig(self._config.email, self._config.listener)
         self.listener = IncomingMailListener(
             config=listener_config,

@@ -37,9 +37,10 @@ Here is a list of things which I could do if I had more time:
   * Use embedding models to cache prompts.
   * Support attachments (pdf, jpg)
 * **Mail processing:**
-  * Dead letter queue to process unhandled messages is not implemented.
+  * Dead letter queue to process unhandled incoming & outgoing messages is not implemented.
+  * Outgoing messages are sent immediately. Ideally should be moved into a separate queue.
   * Parallel mail downloads are not supported.
-  * IDLE loop server push occurs after 1 minute for some reason.
+  * IDLE loop server push on GMail occurs with 1-2 minute delay for some reason.
 * **Chats:**
   * Move email-to-ai handling into separate worker processes which can be scaled on demand.
     * Ideally those processes could be k8s pods/containers which can be autoscaled on demand.
