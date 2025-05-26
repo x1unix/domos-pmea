@@ -18,6 +18,6 @@ class LLMMailConsumer(ThreadConsumer):
 
     async def consume_thread_message(self, thread_id: str, m: Message) -> None:
         self._logger.info(
-            f"Thread {thread_id}: New email: from={m.sender}; to={m.receiver}; dt={m.sent_at}; subj={m.subject};"
+            f"Thread {thread_id}: New email: uid={m.uid}; from={m.sender}; to={m.receiver}; dt={m.sent_at}; subj={m.subject};"
         )
         self._logger.info(f"body: {m.body}")

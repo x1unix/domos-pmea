@@ -1,11 +1,11 @@
 import asyncio
 import re
-from typing import Protocol
+from typing import Optional, Protocol
 from aioimaplib import aioimaplib
 from dataclasses import dataclass
 import logging
 from ..config import EmailConfig, ListenerOptions
-from .utils import iter_messages, parse_message_headers, parse_msg_payload, uid_from_fetch_line
+from .utils import assert_ok, iter_messages, parse_message_headers, parse_msg_payload, uid_from_fetch_line, uidnext_from_select_response
 from email.utils import parsedate_to_datetime
 from email import message
 from .types import Contact, Message
@@ -16,6 +16,14 @@ UID_RX = re.compile(rb"\* \d+ EXISTS")
 class ListenerConfig:
     email_provider: EmailConfig
     options: ListenerOptions
+
+class LastUIDStore(Protocol):
+    """Abstract interface to implement last read UID store."""
+    async def get_last_uid(self, email: str) -> Optional[int]:
+        pass
+    async def set_last_uid(self, email: str, uid: int) -> None:
+        pass
+
 
 class MailConsumer(Protocol):
     """Abstract interface to implement mail handler."""
@@ -28,13 +36,14 @@ class IncomingMailListener:
     _msg_queue: asyncio.Queue[tuple[int, message.Message]] | None = None
     _running: bool = False
     _client: aioimaplib.IMAP4 | aioimaplib.IMAP4_SSL | None = None
-    _last_uid: int | None = None
     _consumer: MailConsumer
     _logger: logging.Logger = logging.getLogger(__name__)
+    _last_uid_store: LastUIDStore
 
-    def __init__(self, config: ListenerConfig, consumer: MailConsumer):
+    def __init__(self, config: ListenerConfig, last_uid_store: LastUIDStore, consumer: MailConsumer):
         self._config = config
         self._consumer = consumer
+        self._last_uid_store = last_uid_store
 
     async def start(self):
         self._running = True
@@ -42,16 +51,14 @@ class IncomingMailListener:
         await self._connect_and_idle()
 
     async def _update_last_uid(self, uid: int):
-        # TODO: persist last UID!
-        self._last_uid = max(self._last_uid, uid)
+        await self._last_uid_store.set_last_uid(self._config.email_provider.username, uid)
 
     async def _get_last_uid(self) -> int:
-        # TODO: get last UID from a persistent storage.
-        if self._last_uid is None:
+        last_uid = await self._last_uid_store.get_last_uid(self._config.email_provider.username)
+        if last_uid is None:
             self._logger.warning("last UID is not set, using first UID")
-            self._last_uid = 0
-
-        return self._last_uid
+            return 0
+        return last_uid
 
     async def _connect_and_idle(self):
         ssl = self._config.email_provider.use_ssl
@@ -93,11 +100,20 @@ class IncomingMailListener:
         last_uid = await self._get_last_uid()
 
         self._logger.info(f"fetching messages since uid {last_uid}...")
+        code, lines = await self._client.select(self._config.email_provider.mailbox)
+        assert_ok(code, "failed to select mailbox")
+        uidnext = uidnext_from_select_response(lines)
+        if uidnext is None:
+            raise Exception("failed to get UIDNEXT from mailbox")
+
+        remote_last_uid = uidnext - 1
+        if remote_last_uid <= last_uid:
+            self._logger.info(f"no new messages since {last_uid}")
+            return
+
         query = f"{last_uid + 1}:*"
-        await self._client.select(self._config.email_provider.mailbox)
         code, lines = await self._client.uid("FETCH", query, "(UID)")
-        if code != "OK":
-            raise Exception(f"failed to fetch messages: {code} {lines}")
+        assert_ok(code, "failed to search messages")
 
         if not lines:
             self._logger.info(f"no messages found since {last_uid}")

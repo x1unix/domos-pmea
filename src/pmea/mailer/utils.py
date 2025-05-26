@@ -2,11 +2,12 @@ from itertools import batched
 import re
 import email
 from email import message
-from typing import Generator
+from typing import Generator, Optional
 
 from pmea.mailer.types import MessageHeaders
 
 UID_RX_LINE = re.compile(r'^\d+\s+FETCH\s+\(UID\s+(\d+)')
+UIDNEXT_RX_LINE = re.compile(r"^OK \[UIDNEXT (\d+)\]")
 MAIL_RSP_LINES_COUNT = 3
 
 def uid_from_fetch_line(line: bytes) -> int | None:
@@ -67,3 +68,19 @@ def parse_message_headers(msg: message.Message) -> MessageHeaders:
         in_reply_to=msg.get('In-Reply-To', ''),
         references=references if references else None,
     )
+
+def uidnext_from_select_response(lines: list[bytes]) -> Optional[int]:
+    """Parses UIDNEXT from SELECT response line (e.g. 'x FETCH (UID x)')"""
+    if not lines:
+        return None
+    for line in lines:
+        if not line.startswith(b'OK'):
+            continue
+        match = UIDNEXT_RX_LINE.match(line.decode("utf-8", errors="replace"))
+        if match:
+            return int(match.group(1))
+    return None
+
+def assert_ok(code: str, msg: str) -> None:
+    if code != "OK":
+        raise Exception(f"{msg}: {code}")

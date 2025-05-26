@@ -34,7 +34,12 @@ class Application:
         threads_repo = ThreadsRepository(redis_client)
         llm_consumer = LLMMailConsumer(ConsumerConfig(self._config.redis, self._config.chats))
         listener_config = ListenerConfig(self._config.email, self._config.listener)
-        self.listener = IncomingMailListener(listener_config, ThreadMailConsumer(llm_consumer, threads_repo))
+        self.listener = IncomingMailListener(
+            config=listener_config,
+            consumer=ThreadMailConsumer(llm_consumer, threads_repo),
+            last_uid_store=threads_repo,
+        )
+
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self.listener.start())
 
