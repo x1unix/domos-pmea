@@ -1,13 +1,7 @@
 from dataclasses import dataclass
 import json
 from typing import Any, List
-from ..models import Apartment, Tenant
-
-@dataclass
-class PropertySearchQuery:
-    address: str | None = None
-    tenant_name: str | None = None
-    tenant_email: str | None = None
+from ..models import Apartment, Tenant, PropertySearchQuery
 
 class PropertiesRepository:
     _properties: List[Apartment]
@@ -27,7 +21,7 @@ class PropertiesRepository:
                 for item in raw_data
             ]
 
-    def find_property(self, query: PropertySearchQuery) -> List[Apartment]:
+    def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
         if not query.address and not query.tenant_name and not query.tenant_email:
             raise ValueError("At least one search criteria must be provided.")
 
@@ -38,6 +32,13 @@ class PropertiesRepository:
             results = [
                 p for p in results
                 if p.address.lower().startswith(addr)
+            ]
+
+        if query.city:
+            city = query.city.lower()
+            results = [
+                p for p in results
+                if p.city.lower() == city
             ]
 
         if query.tenant_name:

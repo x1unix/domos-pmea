@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 import logging
-from typing import Protocol
+from typing import List, Protocol
 from langchain_core.tools import BaseTool
 from pmea.mailer.types import Message
+from pmea.models import Apartment, PropertySearchQuery
 
 class MailReplyer(Protocol):
     """Abstract interface to reply to a mail thread."""
@@ -10,6 +11,13 @@ class MailReplyer(Protocol):
         self, thread_id: str, parent_msg: Message, body: str
     ) -> None:
         """Sends a mail reply to the given thread."""
+
+class PropertiesStore(Protocol):
+    def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
+        """Finds properties matching the given query."""
+    
+    def get_property_by_id(self, property_id: str) -> Apartment | None:
+        """Gets a property by its ID."""
 
 @dataclass
 class ToolContext:

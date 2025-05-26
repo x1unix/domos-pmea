@@ -10,16 +10,16 @@ from langchain_core.callbacks import (
 
 from .types import BaseAsyncTool, ToolContext, MailReplyer
 
-class ReplyToCustomerInput(BaseModel):
+class ReplyToUserInput(BaseModel):
     text: str = Field(description="Message body the assistant should send back to the user")
 
-class ReplyToCustomerTool(BaseAsyncTool):
+class ReplyToUserTool(BaseAsyncTool):
     name: str = "reply_to_user"
     description: str = """
        Tool to use for assistant to send reply back to user.
        Message body should contain just message text, no headers.
     """
-    args_schema: Type[BaseModel] = ReplyToCustomerInput
+    args_schema: Type[BaseModel] = ReplyToUserInput
     # return_direct: bool = True
 
     _replyer: MailReplyer
