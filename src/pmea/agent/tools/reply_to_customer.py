@@ -34,9 +34,10 @@ class ReplyToCustomerTool(BaseAsyncTool):
             self,
             text: str,
             run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-        ) -> None:
+        ) -> str:
             await self._replyer.reply_in_thread(
                 self._context.thread_id,
                 self._context.original_message,
                 text,
             )
+            return "Reply sent successfully"
