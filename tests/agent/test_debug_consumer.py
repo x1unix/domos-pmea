@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import datetime
 import logging
+from typing import Generator
+import uuid
 import pytest
 import redis.asyncio as aioredis
 from langchain_redis import RedisChatMessageHistory
@@ -44,24 +46,59 @@ async def make_chat_history(thread_id: str, with_redis: bool = False) -> BaseCha
         session_id=sanitize_session_id(thread_id),
     )
 
+def make_msg_id() -> str:
+    return f"<{uuid.uuid4()}@example.com>"
+
+@dataclass
+class MessageInput:
+    receiver: Contact
+    sender: Contact
+    body: str
+
+def iter_messages(subject: str, input: list[MessageInput]) -> Generator[Message, None]:
+    prev_msg_id: str | None = None
+    references: list[str] | None = None
+    for i, msg_input in enumerate(input):
+        msg_id = make_msg_id()
+        if prev_msg_id and references:
+            references.append(prev_msg_id)
+        elif prev_msg_id:
+            references = [prev_msg_id]
+
+        msg = Message(
+            uid=str(i),
+            receiver=msg_input.receiver,
+            sender=msg_input.sender,
+            subject=subject,
+            sent_at=datetime.datetime.now(),
+            body=msg_input.body,
+            headers=MessageHeaders(
+                msg_id=msg_id,
+                in_reply_to=prev_msg_id,
+                references=references,
+            ),
+        )
+        prev_msg_id = msg_id
+        yield msg
+
+
 @pytest.mark.asyncio
 async def test_debug_ai_consumer():
     setup_logging(LoggerConfig(level="INFO"))
     thread_id = "f8d0ae53-fa12-418b-8736-3e2c75cf9902"
-    msg = Message(
-        uid="test",
-        receiver=Contact(name="Agent", email="agent@example.com"),
-        sender=Contact(name="User", email="user@example.com"),
-        sent_at=datetime.datetime.now(),
-        subject="Hello",
-        body="Hello, how are you?",
-        headers=MessageHeaders(
-            msg_id="<1b169af6-5ac6-48f8-9aa7-0ba5e3419630@example.com>",
-            in_reply_to=None,
-            references=None,
+    messages: list[MessageInput] = [
+       MessageInput(
+            receiver=Contact(name="Agent", email="agent@example.com"),
+            sender=Contact(name="User", email="user@example.com"),
+            body="Hello, how are you?",
         ),
-    )
-
+       MessageInput(
+            receiver=Contact(name="Agent", email="agent@example.com"),
+            sender=Contact(name="User", email="user@example.com"),
+            body="What is my name? And what did I ask you in previous message?",
+        ) 
+    ]
+    
     llm_config = LLMConfig(
         provider="ollama",
         model_name="qwen3:8b",
@@ -76,10 +113,12 @@ async def test_debug_ai_consumer():
 
     replyer = MailReplyerMock()
     llm_consumer = LLMMailConsumer(consumer_config, CallToolsDependencies(replyer))
-    await llm_consumer.consume_thread_message(thread_id, msg)
+
+    for msg in iter_messages("Hello", messages):
+        await llm_consumer.consume_thread_message(thread_id, msg)
     replies = replyer.replies()
-    # assert len(replies) > 0
+    assert len(replies) > 0
     logging.info("--- Received Replies: ---")
-    for reply in replies:
-        logging.info(f"[ Thread ID: {reply.thread_id}; To: {reply.parent_msg.sender.email} ]")
+    for i, reply in enumerate(replies):
+        logging.info(f"[ #{i} Thread ID: {reply.thread_id}; To: {reply.parent_msg.sender.email} ]")
         logging.info(reply.body)
