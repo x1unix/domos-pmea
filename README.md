@@ -1,16 +1,40 @@
 # Property Manager Email Assistant - Test Assignment
 
-## Assumptions
+## Design
+
+### Project Structure
+
+```
+src/
+└── pmea/
+    ├── agent/                # AI Agent Messages Processor
+    │   └── tools/            # Tools callable by agent
+    ├── config/               # Configuration logic & types
+    ├── mailer/               # Email consuming and publishing (IMAP/SMTP)
+    ├── models/               # Shared data types and classes
+    ├── repository/           # Data access layer
+    ├── app.py                # Bootstrap
+    └── main.py               # Entrypoint
+```
+
+#### Stack
+
+* uv - Python and package manager.
+* Redis - Chat history and mail processing state storage.
+* LangChain - wrapper around different AI model/platform providers.
+* Supported AI providers:
+  * Ollama
+  * Google (Gemini)
+
+### Assumptions
 
 * All tenants live in US and speak only English.
 * User won't try to spam, flood or abuse context size of agent.
 * Agent speak only with 1 person in each Email thread.
 
-## Design
-
 ### Inbox Mail Processing
 
-At startup, server checks for missed messages by tracking `uid` and waits for new one using IDLE loop.\
+At startup, server checks for missed messages by tracking `uid` and waits for new events using IDLE loop.\
 This logic is implemented in `pmea.mailer.mail_listener` package.
 
 > [!NOTE]
@@ -34,6 +58,7 @@ Each thread has an assigned UUIDv4 which is also later used for AI session ID to
 ### AI Agent Stage
 
 After message was categorized, it's routed to `pmea.agent.consumer` which:
+
 * prepares tool call handlers.
 * provides chat history based on mail thread ID.
 * sets up and runs chain.
@@ -55,16 +80,16 @@ See *Implementation Trade-offs* for context.
 In order to interact with the system, agent has access to a set of tools:
 
 * `find_properties`
-    - Provides agent ability to locate tenant's property info, contract information and landlord email.
-    - Supports partial non-strict search so agent can try to guess or request extra information if necessary.
+  * Provides agent ability to locate tenant's property info, contract information and landlord email.
+  * Supports partial non-strict search so agent can try to guess or request extra information if necessary.
 * `get_property_by_id`
-    - Performs strict search by apartment ID.
-    - Can be used by AI if it still remembers correct property ID infered by previous call.
+  * Performs strict search by apartment ID.
+  * Can be used by AI if it still remembers correct property ID infered by previous call.
 * `create_ticket`
-    - Create a ticket if necessary, as per requirements.
-    - Information from `find_properties` is necessary to fill a ticket.
+  * Create a ticket if necessary, as per requirements.
+  * Information from `find_properties` is necessary to fill a ticket.
 * `forward_to_stakeholder`
-    - If agent is not capable to help, forwards tenant's mail to landlord with additional context (property info).
+  * If agent is not capable to help, forwards tenant's mail to landlord with additional context (property info).
 
 > [!NOTE]
 > I didn't test how system will behave when multiple people are communicating within the same thread.
@@ -92,20 +117,24 @@ Here is a list of trade-offs and things which I could do if I had more time.
   * Property data is mocked and stored as a JSON file for sake of simplicity.
   * This can be moved into an actual database - sqlite is fine for local instances.
 * **LLM:**
+  * Tool call arguments validation using schema.
   * Introduce stable multi-user support in conversation.
-      * Currently agent is already supplied with sender name and address but it doesn't have separate roles.
+    * Currently agent is already supplied with sender name and address but it doesn't have separate roles.
   * Support *reasoning models* and filter out `<think>...</think>` and other artifacts.
     * I tried to circumvent this by asking model to use a special `reply_to_user` tool but couldn't get reliable results.
     * Some models like `qwen3` still made output to chat instead of using the tool.
   * Use embedding models to cache prompts.
   * Support attachments (pdf, jpg)
   * Chat history size management (or at-least a ring buffer).
+  * Ability to export conversations into some form of audit log to track quality.
+  * **LLM - Tools:**
+    * Ability to track status of created ticket.
 * **Mail processing:**
   * **IDLE loop server push on GMail occurs with 2-3 minute delay for some reason.**
   * Email clients in threads include reply quotes which need to be removed before processing because:
-      * Bloat AI context with unecessary data.
-      * Can impact on result and confuse LLM.
-      * I tried to solve this myself but even [mail-parser-reply](https://github.com/alfonsrv/mail-parser-reply) doesn't handle Gmail cases well, especially if thread was done between different mail agents.
+    * Bloat AI context with unecessary data.
+    * Can impact on result and confuse LLM.
+    * I tried to solve this myself but even [mail-parser-reply](https://github.com/alfonsrv/mail-parser-reply) doesn't handle Gmail cases well, especially if thread was done between different mail agents.
   * Missing Dead letter queue to process unhandled incoming & outgoing messages.
   * Use queues like *Redis, Kafka, etc* for emails to avoid loosing unprocessed mails.
   * Outgoing messages are sent immediately. Ideally should be moved into a separate queue for background process.
@@ -129,7 +158,7 @@ I used both Cursor and mix of Claude & ChatGPT:
 
 * Cursor for code generation and autocompletion.
 * ChatGPT o3 model for IMAP protocol and LangChain research where possible.
-    * I also tried Gemini Pro reasoning model inside Cursor but it performed poorly.
+  * I also tried Gemini Pro reasoning model inside Cursor but it performed poorly.
 
 #### Bootstrapping
 
@@ -174,4 +203,3 @@ Usually in that cases I just resort to checking examples by searching existing c
 In addition to that, during development I faced some issues which AI can't address or investigate. As example:
 
 * <https://github.com/langchain-ai/langchain-redis/issues/67>
-
