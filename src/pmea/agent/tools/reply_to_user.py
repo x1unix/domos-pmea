@@ -7,8 +7,12 @@ from langchain_core.callbacks import AsyncCallbackManagerForToolRun
 
 from .types import BaseAsyncTool, ToolContext, MailReplyer
 
+
 class ReplyToUserInput(BaseModel):
-    text: str = Field(description="Message body the assistant should send back to the user")
+    text: str = Field(
+        description="Message body the assistant should send back to the user"
+    )
+
 
 class ReplyToUserTool(BaseAsyncTool):
     name: str = "reply_to_user"
@@ -27,13 +31,13 @@ class ReplyToUserTool(BaseAsyncTool):
         self._context = context
 
     async def _arun(
-            self,
-            text: str,
-            run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-        ) -> str:
-            await self._replyer.reply_in_thread(
-                self._context.thread_id,
-                self._context.original_message,
-                text,
-            )
-            return "Reply sent successfully"
+        self,
+        text: str,
+        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+    ) -> str:
+        await self._replyer.reply_in_thread(
+            self._context.thread_id,
+            self._context.original_message,
+            text,
+        )
+        return "Reply sent successfully"

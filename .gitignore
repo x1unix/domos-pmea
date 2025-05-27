@@ -24,3 +24,4 @@ wheels/
 config.yml
 config.yaml
 data/tickets
+data/forwarded_messages

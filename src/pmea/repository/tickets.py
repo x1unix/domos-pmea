@@ -8,11 +8,11 @@ from pmea.models import SupportTicketInputs
 
 class TicketRepository:
     """Stub implementation of filesystem-based ticket repository."""
-    __directory: Path
+    _directory: Path
     _logger: logging.Logger = logging.getLogger(__name__)
 
     def __init__(self, directory: str):
-        self.__directory = Path(directory)
+        self._directory = Path(directory)
         self._directory.mkdir(parents=True, exist_ok=True)
 
     def create_ticket(self, ticket: SupportTicketInputs) -> str:

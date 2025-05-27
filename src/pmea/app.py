@@ -12,13 +12,20 @@ from pmea.repository.threads import ThreadsRepository
 from pmea.repository.tickets import TicketRepository
 from .agent import LLMMailConsumer
 from .config import Config, load_config_from_flags, setup_logging
-from .mailer import ThreadMailConsumer, IncomingMailListener, ListenerConfig
+from .mailer import (
+    ThreadMailConsumer,
+    IncomingMailListener,
+    ListenerConfig,
+    MailFileWriter,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class Application:
     listener: IncomingMailListener
     _config: Config
+
     def __init__(self, config: Config):
         self._config = config
 
@@ -37,21 +44,27 @@ class Application:
         except Exception as e:
             raise Exception(f"failed to connect to Redis: {e}")
 
+        # If enabled - forward "@example.com" mails to file writer.
+        file_writer: MailFileWriter | None = None
+        if self._config.storage.forwarded_messages_dir:
+            file_writer = MailFileWriter(self._config.storage.forwarded_messages_dir)
+
         threads_repo = ThreadsRepository(redis_client)
-        mail_sender = MailSender(self._config.email, threads_repo)
+        mail_sender = MailSender(self._config.email, threads_repo, file_writer)
         consumer_config = ConsumerConfig(
             get_chat_model=self._config.llm.get_model_provider(),
-            get_history=(lambda thread_id:
+            get_history=(
+                lambda thread_id:
                 # TODO: use connection pool for Redis.
                 RedisChatMessageHistory(
                     session_id=sanitize_session_id(thread_id),
                     redis_url=self._config.redis.dsn,
                     ttl=self._config.chats.ttl,
                 )
-            )
+            ),
         )
 
-        tickets_repo = TicketRepository(self._config.storage.tickets)
+        tickets_repo = TicketRepository(self._config.storage.tickets_dir)
         props_repo = PropertiesRepository(self._config.storage.properties)
         tool_deps = CallToolsDependencies(mail_sender, props_repo, tickets_repo)
         llm_consumer = LLMMailConsumer(consumer_config, tool_deps)
@@ -66,10 +79,10 @@ class Application:
             tg.create_task(self.listener.start())
 
     @staticmethod
-    def create() -> 'Application': # Return type hint adjusted for forward reference
+    def create() -> "Application":  # Return type hint adjusted for forward reference
         config = load_config_from_flags()
         setup_logging(config.logging)
-        
+
         # Call self (which is the class Application due to @staticmethod) to instantiate
-        app = Application(config) 
-        return app 
+        app = Application(config)
+        return app
