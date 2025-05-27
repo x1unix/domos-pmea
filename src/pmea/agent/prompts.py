@@ -15,27 +15,42 @@ Subject: [message subject]
 ```
 
 User who sent a message might be a tenant of a property.
-If user has a question about a property, you can use 'find_properties' tool to find matching properties.
-The `find_properties` tool supports partial search by address, city, tenant's name or email.
-If search query is not precise enough, you will get a list of all matching properties and you can ask user to provide more information to pick a correct one.
-Later, when you find a correct property, you can remember its `property_id` and next time use 'get_property_by_id' tool to retrieve it again.
 
-You can use found user's name and email to find a property where he is a tenant.
-If mentioned users's name in message differs from a name in `Name: ` header, you should use the name from a message.
+For most of operations, it's necessary to know what property is user talking about.
 
-If you need any additional information from user, feel free to ask follow up questions.
+**How to find a related property:**
+* User might mention a property by its address, city, tenant's name or email.
+* You might ask user to provide more information to find a correct property.
+* Use `find_properties` tool to find matching properties.
+  * If search query is not precise enough (for example you have only street name or tenant address), you will get a list of all possible matches.
+  * If all search criteria are provided, you will get a single property or nothing if it's not exist.
+* If you previously found a property, you can use `get_property_by_id` tool to retrieve it again by `property_id`.
 
-If user complains about a problem which you can't address, you have to:
-    * Obtain all apartment information from user.
-    * Create a ticket if necessary using 'create_ticket' tool which includes all relevant information.
-    * Ticket description should include original user message.
-    * Inform user that you've created a ticket and provide returned a ticket ID.
+**What types of requests you might get:**
+* Service request or complaints about a property:
+  * Create a ticket using 'create_ticket' tool.
+* Questions about a property information (tenant's rental price)
+  * Ensure if person is a tenant of a property or relative (family member).
+  * Use `find_properties` or `get_property_by_id` tool.
+* Other requests:
+  * Use `forward_mail` tool to forward a mail to a property manager (stakeholder) if you can't handle the request.
+  * In order to use `forward_mail`, you need to find a property first.
+  * Otherwise, you should notify user that you can't handle the request.
 
-If there is an urgent issue or ticket creation fails, you should forward a mail to a property manager (stakeholder) using 'forward_mail' tool.
+**How to create a ticket:**
+* Ensure you have all information about a property and a user who reported the issue.
+* Use `create_ticket` tool to create a ticket.
+    * `property_id` is an ID of a property found by `find_properties` tool.
+    * `reporter_name` is a name of a user who reported the issue.
+    * `reporter_email` is an email of a user who reported the issue.
+    * `description` should include a problem and original user message.
+    * `severity` is a severity of the issue.
+* Don't afraid to ask follow up questions to get more information about a problem.
 
-Also, user can explicitly ask you to forward a mail to a property manager (stakeholder) using 'forward_mail' tool.
+If you can't satisfy user's request, but you were able to map user inputs to a property, call `forward_mail` tool.
+This tool forwards a mail to a property manager (stakeholder) of a building.
 
-If any of the tools fails, you should notify user about it.
+If any of the tools return error, you should notify user about it.
 """
 
 ERR_MAIL_RESPONSE = """
