@@ -1,17 +1,17 @@
-from dataclasses import dataclass
 import json
 from typing import Any, List
 from ..models import Apartment, Tenant, PropertySearchQuery
 
 class PropertiesRepository:
     _properties: List[Apartment]
+    _property_ids: dict[str, int]
 
     def __init__(self, properties_path: str):
         with open(properties_path, "r") as f:
-            raw_data: List[dict[str, Any]] = json.load(f)
+            raw_data: List[dict[int, Any]] = json.load(f)
             self._properties = [
                 Apartment(
-                    property_id=item["property_id"],
+                    property_id=int(item["property_id"]),
                     address=item["address"],
                     city=item["city"],
                     tenant=Tenant(**item["tenant"]),
@@ -20,6 +20,16 @@ class PropertiesRepository:
                 )
                 for item in raw_data
             ]
+            self._property_ids = {a.property_id: i for i, a in enumerate(self._properties)}
+
+    def property_exists(self, property_id: int) -> bool:
+        return property_id in self._property_ids
+
+    def get_property_by_id(self, property_id: int) -> Apartment | None:
+        if not property_id in self._property_ids:
+            return None
+        i = self._property_ids[property_id]
+        return self._properties[i]
 
     def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
         if not query.address and not query.tenant_name and not query.tenant_email:
@@ -55,9 +65,3 @@ class PropertiesRepository:
             ]
         
         return results
-
-    def get_property_by_id(self, property_id: str) -> Apartment | None:
-        for prop in self._properties:
-            if prop.property_id == property_id:
-                return prop
-        return None

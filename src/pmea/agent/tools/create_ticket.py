@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, EmailStr
 from langchain_core.callbacks import AsyncCallbackManagerForToolRun
 
 from pmea.models import SupportTicketInputs
-from .types import BaseAsyncTool, TicketCreator
+from .types import BaseAsyncTool, PropertiesStore, TicketCreator
 
 class SupportTicketInputModel(BaseModel):
     """Fields required to create a support ticket."""
@@ -24,17 +24,20 @@ class CreateTicketTool(BaseAsyncTool):
     description: str = (
         "Tool to use for assistant to create a support ticket."
         "Returns a JSON string with object:"
-        "{\"success\": boolean, \"id\": string | null }"
+        "{\"success\": boolean, \"id\": string | null, \"error\": string | null }"
         ""
         "`success` indicates if the tool call was successful or had an error and failed."
+        "`error` contains error message if `success` is false, otherwise it's null."
         "`id` contains created ticket ID if `success` is true, otherwise it's null."
     )
 
     _ticket_creator: TicketCreator
+    _properties_store: PropertiesStore
 
-    def __init__(self, ticket_creator: TicketCreator):
+    def __init__(self, ticket_creator: TicketCreator, properties_store: PropertiesStore):
         super().__init__()
         self._ticket_creator = ticket_creator
+        self._properties_store = properties_store
     
     async def _arun(
             self,
@@ -60,7 +63,10 @@ class CreateTicketTool(BaseAsyncTool):
                 logger.info(
                     "%s tool called: params=%s; msg=%s",
                     self.name, ticket, ctx_key,
-                ) 
+                )
+                if not self._properties_store.property_exists(property_id):
+                     raise Exception(f"Property with ID {property_id} does not exist")
+
                 ticket_id = self._ticket_creator.create_ticket(ticket)
                 return json.dumps({ "success": True, "id": ticket_id })
             except Exception as e:
@@ -68,4 +74,4 @@ class CreateTicketTool(BaseAsyncTool):
                     "%s tool returned error: %s (params=%s; msg=%s)",
                     self.name, e, ticket, ctx_key,
                 )
-                return json.dumps({ "success": False })
+                return json.dumps({ "success": False, "error": str(e) })

@@ -16,8 +16,11 @@ class PropertiesStore(Protocol):
     def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
         """Finds properties matching the given query."""
     
-    def get_property_by_id(self, property_id: str) -> Apartment | None:
+    def get_property_by_id(self, property_id: int) -> Apartment | None:
         """Gets a property by its ID."""
+    
+    def property_exists(self, property_id: int) -> bool:
+        """Checks if a property exists."""
 
 class TicketCreator(Protocol):
     """Abstract interface to create a support ticket."""

@@ -152,7 +152,7 @@ class GetPropertyByIdTool(BaseAsyncTool):
     
     async def _arun(
             self,
-            property_id: str | None = None,
+            property_id: int | str | None = None,
             run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         ) -> str:
             ctx_key = f"{self._context.thread_id}:{self._context.original_message.headers.msg_id}"
@@ -163,7 +163,7 @@ class GetPropertyByIdTool(BaseAsyncTool):
                     { "property_id": property_id },
                     ctx_key,
                 ) 
-                result = self._properties_store.get_property_by_id(property_id)
+                result = self._properties_store.get_property_by_id(int(property_id))
                 return json.dumps({ "success": True, "data": asdict(result) if result else None })
             except Exception as e:
                 logger.error(
