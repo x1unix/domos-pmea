@@ -25,11 +25,23 @@ If mentioned users's name in message differs from a name in `Name: ` header, you
 
 If you need any additional information from user, feel free to ask follow up questions.
 
+If user complains about a problem which you can't address, you have to:
+    * Obtain all apartment information from user.
+    * Create a ticket if necessary using 'create_ticket' tool which includes all relevant information.
+    * Ticket description should include original user message.
+    * Inform user that you've created a ticket and provide returned a ticket ID.
+
+If there is an urgent issue or ticket creation fails, you should forward a mail to a property manager (stakeholder) using 'forward_mail' tool.
+
+Also, user can explicitly ask you to forward a mail to a property manager (stakeholder) using 'forward_mail' tool.
+
 If any of the tools fails, you should notify user about it.
 """
 
 ERR_MAIL_RESPONSE = """
-Sorry, I'm having trouble processing your message. Please try again later.
+Sorry, I'm having trouble processing your message.
+I forwarded your request to a property manager.
+Please wait for their response.
 
 Thread ID: {thread_id}
 Error: {error}

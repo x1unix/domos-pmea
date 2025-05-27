@@ -9,6 +9,7 @@ from pmea.agent.utils import sanitize_session_id
 from pmea.mailer.sender import MailSender
 from pmea.repository.properties import PropertiesRepository
 from pmea.repository.threads import ThreadsRepository
+from pmea.repository.tickets import TicketRepository
 from .agent import LLMMailConsumer
 from .config import Config, load_config_from_flags, setup_logging
 from .mailer import ThreadMailConsumer, IncomingMailListener, ListenerConfig
@@ -50,8 +51,9 @@ class Application:
             )
         )
 
+        tickets_repo = TicketRepository(self._config.storage.tickets)
         props_repo = PropertiesRepository(self._config.storage.properties)
-        tool_deps = CallToolsDependencies(mail_sender, props_repo)
+        tool_deps = CallToolsDependencies(mail_sender, props_repo, tickets_repo)
         llm_consumer = LLMMailConsumer(consumer_config, tool_deps)
         listener_config = ListenerConfig(self._config.email, self._config.listener)
         self.listener = IncomingMailListener(

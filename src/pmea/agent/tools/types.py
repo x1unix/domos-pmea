@@ -3,7 +3,7 @@ import logging
 from typing import List, Protocol
 from langchain_core.tools import BaseTool
 from pmea.mailer.types import Message
-from pmea.models import Apartment, PropertySearchQuery
+from pmea.models import Apartment, PropertySearchQuery, SupportTicketInputs
 
 class MailReplyer(Protocol):
     """Abstract interface to reply to a mail thread."""
@@ -18,6 +18,11 @@ class PropertiesStore(Protocol):
     
     def get_property_by_id(self, property_id: str) -> Apartment | None:
         """Gets a property by its ID."""
+
+class TicketCreator(Protocol):
+    """Abstract interface to create a support ticket."""
+    def create_ticket(self, ticket: SupportTicketInputs) -> str:
+        """Creates a support ticket."""
 
 @dataclass
 class ToolContext:
