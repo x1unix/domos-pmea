@@ -43,11 +43,11 @@ class LLMConfig(BaseSettings):
 
         if self.provider == AI_PROVIDER_GOOGLE:
             if not self.api_key:
-                self.api_key = os.getenv("GOOGLE_API_KEY", "")
+                self.api_key = os.getenv("GEMINI_API_KEY", "")
             if not self.api_key:
                 raise ValueError(
                     "API key is required for Google provider. "
-                    "Provide it directly or set the GOOGLE_API_KEY environment variable."
+                    "Provide it directly or set the GEMINI_API_KEY environment variable."
                 )
         return self
     
