@@ -20,7 +20,7 @@
       "email": "bobr@kurwa.dev",
       "phone": "+1-718-555-0102"
     },
-    "stakeholder_email": "bronx.management@example.com",
+    "stakeholder_email": "hello+aitest@x1unix.dev",
     "monthly_rent_usd_cents": 145000
   },
   {
@@ -29,7 +29,7 @@
     "city": "Bronx",
     "tenant": {
       "name": "Miki Tanaka",
-      "email": "miki.tanaka@emailprovider.net",
+      "email": "miki.tanaka@example.com",
       "phone": "+1-718-555-0103"
     },
     "stakeholder_email": "portfolio.manager@example.com",
@@ -41,7 +41,7 @@
     "city": "San Francisco",
     "tenant": {
       "name": "Jane Doe",
-      "email": "jane.doe@company.com",
+      "email": "jane.doe@example.com",
       "phone": "+1-415-555-0104"
     },
     "stakeholder_email": "happyeyeballs4@gmail.com",
@@ -53,7 +53,7 @@
     "city": "Chicago",
     "tenant": {
       "name": "Robert Jones",
-      "email": "rob.jones@domain.org",
+      "email": "rob.jones@example.com",
       "phone": "+1-312-555-0105"
     },
     "stakeholder_email": "chicago.office@example.com",
@@ -65,7 +65,7 @@
     "city": "Seattle",
     "tenant": {
       "name": "Emily White",
-      "email": "emily.w@seattlemail.com",
+      "email": "emily.w@example.com",
       "phone": "+1-206-555-0106"
     },
     "stakeholder_email": "seattle.props@example.com",
@@ -77,7 +77,7 @@
     "city": "Austin",
     "tenant": {
       "name": "David Brown",
-      "email": "david.b@austinmail.org",
+      "email": "david.b@example.com",
       "phone": "+1-512-555-0107"
     },
     "stakeholder_email": "austin.leasing@example.com",
@@ -89,7 +89,7 @@
     "city": "Miami",
     "tenant": {
       "name": "Sophia Garcia",
-      "email": "sophia.g@miamihotmail.com",
+      "email": "sophia.g@example.com",
       "phone": "+1-305-555-0108"
     },
     "stakeholder_email": "miami.luxury@example.com",
@@ -101,7 +101,7 @@
     "city": "Denver",
     "tenant": {
       "name": "Michael Lee",
-      "email": "michael.lee@denverpost.co",
+      "email": "michael.lee@example.com",
       "phone": "+1-303-555-0109"
     },
     "stakeholder_email": "denver.apts@example.com",
@@ -113,7 +113,7 @@
     "city": "Boston",
     "tenant": {
       "name": "Olivia Miller",
-      "email": "olivia.m@bostonconnect.com",
+      "email": "olivia.m@example.com",
       "phone": "+1-617-555-0110"
     },
     "stakeholder_email": "boston.rentals@example.com",
