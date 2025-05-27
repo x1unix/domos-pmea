@@ -16,5 +16,5 @@ def build_call_tools(ctx: ToolContext, deps: CallToolsDependencies) -> list[Base
     return [
         FindPropertiesTool(ctx, deps.properties_store),
         GetPropertyByIdTool(ctx, deps.properties_store),
-        CreateTicketTool(deps.ticket_creator),
+        CreateTicketTool(deps.ticket_creator, deps.properties_store),
     ]
