@@ -8,6 +8,7 @@ async def make_redis_client(cfg: RedisConfig) -> aioredis.Redis:
     redis_client = aioredis.from_url(cfg.dsn)
     try:
         await redis_client.ping()
+        return redis_client
     except Exception as e:
         raise Exception(f"failed to connect to Redis: {e}")
 

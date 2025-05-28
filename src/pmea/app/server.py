@@ -35,7 +35,7 @@ class ServerApplication:
             return
 
     async def _arun(self):
-        redis_client = make_redis_client(self._config.redis)
+        redis_client = await make_redis_client(self._config.redis)
 
         # If enabled - forward "@example.com" mails to file writer.
         file_writer: MailFileWriter | None = None
