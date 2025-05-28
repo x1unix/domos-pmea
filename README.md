@@ -183,7 +183,7 @@ enough time to sync what I did with `PLAN.md`.
 Right now, some parts of the document diverges from actual implementation but I still keep it for \
 historical records.
 
-### Cursor Wibe-Coding experience
+### Cursor Vibe-Coding experience
 
 Cursor was used to make this assignment. I tried mixing different models (Claude, Gemma, GPT) but sometimes experience look like [on this video](https://youtu.be/_2C2CNmK7dQ?si=AYklZ_-MXaGsohtM).
 
