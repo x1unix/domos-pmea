@@ -7,8 +7,7 @@ from ..config import EmailConfig
 from .types import Message
 from .file_writer import MailFileWriter
 
-IGNORED_DOMAIN = "@example.com"
-
+DEFAULT_IGNORED_DOMAINS = set(["example.com", "example.org"])
 
 class ThreadUpdater(Protocol):
     async def add_thread_message(self, message_id: str, thread_id: str) -> None:
@@ -22,24 +21,31 @@ class MailSender:
     _logger: logging.Logger
     _thread_updater: ThreadUpdater
     _file_writer: MailFileWriter | None
+    _ignored_domains: set[str]
 
     def __init__(
         self,
         config: EmailConfig,
         thread_updater: ThreadUpdater,
         file_writer: MailFileWriter | None = None,
+        ignored_domains: set[str] = DEFAULT_IGNORED_DOMAINS,
     ):
         self._logger = logging.getLogger(__name__)
         self._msg_id_domain = config.msg_id_domain
         self._sender = config.username
         self._thread_updater = thread_updater
         self._file_writer = file_writer
+        self._ignored_domains = ignored_domains
         self._smtp = SMTP(
             hostname=config.smtp_host,
             port=config.smtp_port,
             username=config.username,
             password=config.password,
         )
+
+    def _should_ignore_domain(self, email: str) -> bool:
+        parts = email.split("@")
+        return len(parts) > 1 and parts[1] in self._ignored_domains
 
     async def forward_message(
         self, parent_msg: Message, dst_email: str, body: str | None
@@ -61,7 +67,7 @@ class MailSender:
         else:
             msg.set_content(parent_msg.body + forward_header)
 
-        if dst_email.endswith(IGNORED_DOMAIN) and self._file_writer:
+        if self._should_ignore_domain(dst_email) and self._file_writer:
             self._file_writer.save(msg)
             return
 

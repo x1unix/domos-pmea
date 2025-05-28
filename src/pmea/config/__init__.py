@@ -9,5 +9,6 @@ __all__ = [
     "EmailConfig",
     "LLMConfig",
     "LoggerConfig",
+    "OllamaOptions",
     "Config",
 ]
