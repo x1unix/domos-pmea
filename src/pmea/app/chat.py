@@ -37,7 +37,7 @@ class ChatApplication:
         print("=== Chat mode ===")
         print(f"User: {self._user.name} <{self._user.email}>")
         print(f"Subject: {self._subject}\n")
-        print("Type '/exit' or press ^C to exit")
+        print("To quit, type '/exit' or press ^D")
         asyncio.run(self._arun())
 
     async def _arun(self):
