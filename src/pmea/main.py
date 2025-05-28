@@ -9,7 +9,7 @@ app = typer.Typer()
 @app.command(help="Start agent and listen for incoming emails.")
 def serve(
     config_path: str = typer.Option(
-        None,
+        ...,
         "--config",
         "-c",
         help="Path to the YAML config file",
@@ -34,7 +34,7 @@ def chat(
         ..., "--subject", "-s", envvar="CHAT_SUBJECT", help="Subject of chat thread"
     ),
     config_path: str = typer.Option(
-        None,
+        ...,
         "--config",
         "-c",
         help="Path to the YAML config file",
