@@ -134,8 +134,9 @@ def make_forward_message(
 
     forward_header = f"\n\n---\n\nForwarded message from {parent_msg.sender.email}"
     if body:
-        msg_content = body + forward_header
+        msg_content = body + forward_header + "\n\n"
         msg_content += "\n".join([f"> {line}" for line in parent_msg.body.splitlines()])
         msg.set_content(msg_content)
     else:
         msg.set_content(parent_msg.body + forward_header)
+    return msg
