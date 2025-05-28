@@ -14,7 +14,6 @@ class PropertiesRepository:
                     property_id=int(item["property_id"]),
                     apartment=item["apartment"],
                     address=item["address"],
-                    city=item["city"],
                     tenant=Tenant(**item["tenant"]),
                     stakeholder_email=item["stakeholder_email"],
                     monthly_rent_usd_cents=item["monthly_rent_usd_cents"]
@@ -53,13 +52,6 @@ class PropertiesRepository:
                 if p.apartment.lower() == apartment
             ]
 
-        if query.city:
-            city = query.city.lower()
-            results = [
-                p for p in results
-                if p.city.lower() == city
-            ]
-
         if query.tenant_name:
             tenant_name = query.tenant_name.lower()
             results = [
@@ -67,10 +59,4 @@ class PropertiesRepository:
                 if p.tenant and tenant_name in p.tenant.name.lower()
             ]
 
-        if query.tenant_email:
-            results = [
-                p for p in results
-                if p.tenant and p.tenant.email and query.tenant_email.lower() == p.tenant.email.lower()
-            ]
-        
         return results

@@ -3,7 +3,6 @@
     "property_id": 1,
     "address": "2000 Holland Av",
     "apartment": "1F",
-    "city": "New York",
     "tenant": {
       "name": "Wilkin Dan",
       "email": "happyeyeballs4@gmail.com",
@@ -16,7 +15,6 @@
     "property_id": 2,
     "address": "123 Greenwich Ave",
     "apartment": "5B",
-    "city": "Bronx",
     "tenant": {
       "name": "Denys Sedchenko",
       "email": "bobr@kurwa.dev",
@@ -29,7 +27,6 @@
     "property_id": 3,
     "address": "100 Holland Av",
     "apartment": "2D",
-    "city": "Bronx",
     "tenant": {
       "name": "Miki Tanaka",
       "email": "miki.tanaka@example.com",
@@ -42,7 +39,6 @@
     "property_id": 4,
     "address": "450 Market St",
     "apartment": "300",
-    "city": "San Francisco",
     "tenant": {
       "name": "Jane Doe",
       "email": "jane.doe@example.com",
@@ -54,7 +50,6 @@
   {
     "property_id": 5,
     "address": "789 Oak Lane",
-    "city": "Chicago",
     "apartment": "12",
     "tenant": {
       "name": "Robert Jones",
@@ -68,7 +63,6 @@
     "property_id": 6,
     "address": "321 Pine St",
     "apartment": "101",
-    "city": "Seattle",
     "tenant": {
       "name": "Emily White",
       "email": "emily.w@example.com",
@@ -81,7 +75,6 @@
     "property_id": 7,
     "address": "555 Maple Dr",
     "apartment": "102",
-    "city": "Austin",
     "tenant": {
       "name": "David Brown",
       "email": "david.b@example.com",
@@ -94,7 +87,6 @@
     "property_id": 8,
     "address": "987 Elm Rd",
     "apartment": "4806",
-    "city": "Miami",
     "tenant": {
       "name": "Sophia Garcia",
       "email": "sophia.g@example.com",
@@ -107,7 +99,6 @@
     "property_id": 9,
     "address": "654 Birch Blvd",
     "apartment": "7A",
-    "city": "Denver",
     "tenant": {
       "name": "Michael Lee",
       "email": "michael.lee@example.com",
@@ -120,7 +111,6 @@
     "property_id": 100,
     "address": "111 Willow Way",
     "apartment": "3F",
-    "city": "Boston",
     "tenant": {
       "name": "Olivia Miller",
       "email": "olivia.m@example.com",

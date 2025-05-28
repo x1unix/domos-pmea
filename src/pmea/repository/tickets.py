@@ -18,7 +18,7 @@ class TicketRepository:
     def create_ticket(self, ticket: SupportTicketInputs) -> str:
         ticket_id = str(uuid.uuid4())
         ticket["id"] = ticket_id
-        ticket["created_at"] = datetime.utcnow().isoformat()
+        ticket["created_at"] = datetime.datetime.now(datetime.UTC).isoformat()
 
         path = self._directory / f"{ticket_id}.json"
         with open(path, "w", encoding="utf-8") as f:

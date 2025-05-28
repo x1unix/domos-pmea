@@ -25,41 +25,20 @@ class FindPropertyInput(BaseModel):
 
     apartment: str | None = Field(
         None,
-        description="Apartment number without 'Apt' or 'Unit' prefix, optional",
+        description="Apartment number without 'Apt' or 'Unit' prefix",
     )
 
-    city: str | None = Field(
-        None,
-        description="City of the property to find. Example: 'New York' or 'San Francisco'",
-    )
     tenant_name: str | None = Field(
         None,
-        description="First and last name of the tenant to find. Example: 'John Doe' or 'Jane Smith'",
+        description="First and last name of the tenant to find, optional. Example: 'John Doe' or 'Jane Smith'",
     )
-    tenant_email: str | None = Field(None, description="Email of the tenant to find")
-
-
-class TenantInfo(BaseModel):
-    name: str = Field(description="First and last name of the tenant")
-    email: str = Field(description="Email of the tenant")
-    phone: str = Field(description="Phone number of the tenant")
-
-
-class PropertyInfo(BaseModel):
-    address: str = Field(description="Address of the property")
-    city: str = Field(description="City of the property")
-    tenant: TenantInfo = Field(description="Tenant information")
-    stakeholder_email: str = Field(
-        description="Email of the stakeholder that manages this property"
-    )
-    monthly_rent_usd_cents: int = Field(description="Monthly rent price in USD cents")
 
 
 class FindPropertiesTool(BaseAsyncTool):
     name: str = "find_properties"
     args_schema: Type[BaseModel] = FindPropertyInput
     description: str = (
-        "Tool to use for assistant to find matching properties (apartments) by address or city or tenant's name or email"
+        "Tool to use for assistant to find matching properties (apartments) by address or tenant's name"
         "If you don't have enough or precise information, you can try partial search by providing only part of the information."
         "In that case, you will get a list of all matching properties (apartments) and you can ask user to provide more information to pick a correct one."
         ""
@@ -74,7 +53,6 @@ class FindPropertiesTool(BaseAsyncTool):
         "{"
         '    "property_id": 1,'
         '    "address": "string",'
-        '    "city": "string",'
         '    "stakeholder_email": "string",'
         '    "monthly_rent_usd_cents": 230000,'
         '    "tenant": {'
@@ -97,9 +75,7 @@ class FindPropertiesTool(BaseAsyncTool):
     async def _arun(
         self,
         address: str | None = None,
-        city: str | None = None,
         tenant_name: str | None = None,
-        tenant_email: str | None = None,
         apartment: str | None = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
@@ -108,10 +84,8 @@ class FindPropertiesTool(BaseAsyncTool):
         )
         params = {
             "address": address,
-            "city": city,
             "apartment": apartment,
             "tenant_name": tenant_name,
-            "tenant_email": tenant_email,
         }
         try:
             logger.info(
@@ -122,10 +96,8 @@ class FindPropertiesTool(BaseAsyncTool):
             )
             query = PropertySearchQuery(
                 address=address,
-                city=city,
                 apartment=apartment,
                 tenant_name=tenant_name,
-                tenant_email=tenant_email,
             )
             properties = self._properties_store.find_properties(query)
             return json.dumps(
