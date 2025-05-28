@@ -53,6 +53,7 @@ class Application:
         mail_sender = MailSender(self._config.email, threads_repo, file_writer)
         consumer_config = ConsumerConfig(
             get_chat_model=self._config.llm.get_model_provider(),
+            system_prompt_extra=self._config.llm.get_system_prompt_extra(),
             get_history=(
                 lambda thread_id:
                 # TODO: use connection pool for Redis.

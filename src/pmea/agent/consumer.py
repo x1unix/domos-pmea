@@ -21,6 +21,7 @@ MSG_OUTPUT_KEY = "output"
 class ConsumerConfig:
     get_chat_model: Callable[[], BaseChatModel]
     get_history: Callable[[str], BaseChatMessageHistory]
+    system_prompt_extra: str | None
 
 class LLMMailConsumer(ThreadConsumer):
     """Routes incoming email threads to LLM."""
@@ -77,9 +78,13 @@ class LLMMailConsumer(ThreadConsumer):
 
     def _build_chain(self, ctx: ToolContext) -> RunnableWithMessageHistory:
         """Builds a chain for the given thread and message."""
+        system_prompt = SYSTEM_PROMPT
+        if self._config.system_prompt_extra:
+            system_prompt += f"\n{self._config.system_prompt_extra}"
+
         prompt = ChatPromptTemplate.from_messages(
             [
-                SystemMessage(content=SYSTEM_PROMPT),
+                SystemMessage(content=system_prompt),
                 MessagesPlaceholder(variable_name=MSG_HISTORY_KEY),
                 HumanMessage(content=f"{{{MSG_INPUT_KEY}}}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),

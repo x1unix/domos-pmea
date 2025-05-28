@@ -16,6 +16,7 @@ known_ai_providers = [AI_PROVIDER_GOOGLE, AI_PROVIDER_OLLAMA]
 class OllamaOptions(BaseSettings):
     base_url: str = Field(default=_DEFAULT_OLLAMA_URL, description="Ollama server base URL")
     context_length: int = Field(default=8192, description="Context length for Ollama")
+    no_think: bool = Field(default=False, description="Disable model reasoning")
 
 class LLMConfig(BaseSettings):
     """LLM provider configuration
@@ -50,7 +51,12 @@ class LLMConfig(BaseSettings):
                     "Provide it directly or set the GEMINI_API_KEY environment variable."
                 )
         return self
-    
+
+    def get_system_prompt_extra(self) -> str | None:
+        if self.provider == AI_PROVIDER_OLLAMA and self.ollama_options.no_think:
+            return "/no_think"
+        return None
+
     def get_model_provider(self) -> Callable[[], BaseChatModel]:
         if self.provider == AI_PROVIDER_GOOGLE:
             return lambda: ChatGoogleGenerativeAI(
@@ -65,6 +71,7 @@ class LLMConfig(BaseSettings):
                 model=self.model_name,
                 temperature=self.temperature,
                 num_ctx=self.ollama_options.context_length,
+                extract_reasoning=True,
                 **self.model_options,
             )
         else:

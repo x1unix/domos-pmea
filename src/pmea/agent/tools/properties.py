@@ -16,19 +16,22 @@ logger = logging.getLogger(__name__)
 
 class FindPropertyInput(BaseModel):
     address: str | None = Field(
+        None,
         description=(
-            "Building number, street name and apartment number. Can be partial or full."
+            "Tenant's building number, street name and apartment number. Can be partial or full."
             "Example: '221 Baker St, Apt 2D' or '3 Hillow Ave, 3rd Floor'"
-        )
+        ),
     )
 
     city: str | None = Field(
-        description="City of the property to find. Example: 'New York' or 'San Francisco'"
+        None,
+        description="City of the property to find. Example: 'New York' or 'San Francisco'",
     )
     tenant_name: str | None = Field(
-        description="First and last name of the tenant to find. Example: 'John Doe' or 'Jane Smith'"
+        None,
+        description="First and last name of the tenant to find. Example: 'John Doe' or 'Jane Smith'",
     )
-    tenant_email: str | None = Field(description="Email of the tenant to find")
+    tenant_email: str | None = Field(None, description="Email of the tenant to find")
 
 
 class TenantInfo(BaseModel):
@@ -65,14 +68,14 @@ class FindPropertiesTool(BaseAsyncTool):
         "```json"
         "{"
         '    "property_id": 1,'
-        '    "address": "123 Main St, Anytown, USA",'
-        '    "city": "Anytown",'
-        '    "stakeholder_email": "alice@example.com",'
+        '    "address": "string",'
+        '    "city": "string",'
+        '    "stakeholder_email": "string",'
         '    "monthly_rent_usd_cents": 230000,'
         '    "tenant": {'
-        '        "name": "John Doe",'
-        '        "email": "john.doe@example.com",'
-        '        "phone": "+1-202-555-0100"'
+        '        "name": "string",'
+        '        "email": "string",'
+        '        "phone": "string"'
         "    },"
         "}"
         "```"
@@ -159,14 +162,14 @@ class GetPropertyByIdTool(BaseAsyncTool):
         "```json"
         "{"
         '    "property_id": 1,'
-        '    "address": "123 Main St, Anytown, USA",'
-        '    "city": "Anytown",'
-        '    "stakeholder_email": "alice@example.com",'
+        '    "address": "string",'
+        '    "city": "string",'
+        '    "stakeholder_email": "string",'
         '    "monthly_rent_usd_cents": 230000,'
         '    "tenant": {'
-        '        "name": "John Doe",'
-        '        "email": "john.doe@example.com",'
-        '        "phone": "+1-202-555-0100"'
+        '        "name": "string",'
+        '        "email": "string",'
+        '        "phone": "string"'
         "    },"
         "}"
         "```"

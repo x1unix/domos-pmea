@@ -53,6 +53,21 @@ llm_config_gemini_20_flash = (lambda:
     )
 )
 
+llm_config_llama31_8b = (lambda:
+    LLMConfig(
+        provider="ollama",
+        model_name="llama3.1:8b",
+        temperature=0.4,
+        ollama_options=OllamaOptions(
+            no_think=True,
+            context_length=12288,
+        ),
+        model_options={
+            "with_thinking": False,
+        },
+    )
+)
+
 llm_config_ollama_qwen14b = (lambda: 
     LLMConfig(
         provider="ollama",
@@ -63,9 +78,12 @@ llm_config_ollama_qwen14b = (lambda:
         },
         ollama_options=OllamaOptions(
             context_length=12288,
+            no_think=True,
         ),
     )
 )
+
+llm_config_ollama = llm_config_ollama_qwen14b
 
 @dataclass
 class CollectedReply:
@@ -165,7 +183,7 @@ async def run_llm_consumer(
     mod_dir = Path(__file__).resolve().parent
     data_dir = mod_dir.parent.parent / "data"
     storage_cfg = StorageConfig(
-        tickets_dir=data_dir / "tickets_db.json",
+        tickets_dir=data_dir / "tickets",
         forwarded_messages_dir=data_dir / "forwarded_messages",
         properties=data_dir / "properties_db.json",
     )
@@ -186,6 +204,7 @@ async def run_llm_consumer(
         consumer_config = ConsumerConfig(
             get_chat_model=cfg.get_model_provider(),
             get_history=make_chat_history,
+            system_prompt_extra=cfg.get_system_prompt_extra(),
         )
 
         llm_consumer = LLMMailConsumer(consumer_config, tool_deps)
@@ -216,7 +235,7 @@ async def test_debug_ai_consumer_memory_ollama():
         ),
     ]
 
-    replies = await run_llm_consumer(thread_id, llm_config_ollama_qwen14b, messages)
+    replies = await run_llm_consumer(thread_id, llm_config_ollama, messages)
     assert len(replies) > 0
 
 
@@ -254,7 +273,7 @@ async def test_debug_ai_consumer_infer_tenant_info_ollama():
         ),
     ]
 
-    replies = await run_llm_consumer(thread_id, llm_config_ollama_qwen14b, messages)
+    replies = await run_llm_consumer(thread_id, llm_config_ollama, messages)
     assert len(replies) > 0
 
 @pytest.mark.asyncio
