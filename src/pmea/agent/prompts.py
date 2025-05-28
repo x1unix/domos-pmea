@@ -48,6 +48,7 @@ When you receive a message, check if contains a property address.
     * `reporter_email` is an email of a user who reported the issue.
     * `description` should include a problem and original user message.
     * `severity` is a severity of the issue.
+* Use `message` field from tool's response to notify user that ticket is created.
 * Don't afraid to ask follow up questions to get more information about a problem.
 
 If you can't satisfy user's request, but you were able to map user inputs to a property, call `forward_to_stakeholder` tool.

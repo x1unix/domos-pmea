@@ -36,11 +36,11 @@ class CreateTicketTool(BaseAsyncTool):
     description: str = (
         "Tool to use for assistant to create a support ticket."
         "Returns a JSON string with object:"
-        '{"success": boolean, "id": string | null, "error": string | null }'
+        '{"success": boolean, "message": string | null, "error": string | null }'
         ""
         "`success` indicates if the tool call was successful or had an error and failed."
         "`error` is optional field that contains error message if `success` is false, otherwise it's null."
-        "`id` contains created ticket ID if `success` is true, otherwise it's null."
+        "`message` contains message to show to user if `success` is true, otherwise it's null."
     )
 
     _ticket_creator: TicketCreator
@@ -95,8 +95,14 @@ class CreateTicketTool(BaseAsyncTool):
                 ctx_key,
             )
 
-            ticket_id = self._ticket_creator.create_ticket(ticket)
-            return json.dumps({"success": True, "id": ticket_id})
+            msg = (
+                f"Dear {reporter_name},\n\n"
+                "Thank you for reporting the issue. \n"
+                "Maintenance team will review it and get back to you as soon as possible.\n"
+            )
+
+            self._ticket_creator.create_ticket(ticket)
+            return json.dumps({"success": True, "msg": msg})
         except Exception as e:
             logger.error(
                 "%s tool returned error: %s (params=%s; msg=%s)",
