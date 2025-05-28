@@ -111,7 +111,6 @@ Redis was chosen as it's already used to track message to thread relation.
 In case of any unexpected exception from AI side (Ollama server died, etc):
 
 * Tenant gets a templated mail that system isn't able to handle his request.
-* Tenant's mail is forwarded to property manager (if possible).
 
 ## Implementation Trade-offs
 
