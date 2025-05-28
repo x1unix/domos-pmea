@@ -30,6 +30,9 @@ def chat(
     actor_name: str = typer.Option(
         ..., "--name", "-n", envvar="CHAT_USER", help="First and last name of chat user"
     ),
+    subject: str = typer.Option(
+        ..., "--subject", "-s", envvar="CHAT_SUBJECT", help="Subject of chat thread"
+    ),
     config_path: str = typer.Option(
         None,
         "--config",
@@ -40,7 +43,7 @@ def chat(
 ):
     cfg = Config.from_path(config_path)
     setup_logging(cfg.logging)
-    app = ChatApplication(cfg, actor_email, actor_name)
+    app = ChatApplication(cfg, actor_email, actor_name, subject)
     app.run()
 
 

@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+from datetime import datetime
 from email.utils import make_msgid
 from pathlib import Path
 from typing import Optional
@@ -25,15 +25,18 @@ class ChatApplication:
     """Debug chat mode application."""
 
     _config: Config
+    _subject: str
     _user: Contact
 
-    def __init__(self, config: Config, user_email: str, user_name: str):
+    def __init__(self, config: Config, user_email: str, user_name: str, subject: str):
         self._config = config
-        self._contact = Contact(email=user_email, name=user_name)
+        self._subject = subject
+        self._user = Contact(email=user_email, name=user_name)
 
     def run(self):
-        print("Chat mode")
-        print(f"User: {self._contact.name} <{self._contact.email}>\n")
+        print("=== Chat mode ===")
+        print(f"User: {self._user.name} <{self._user.email}>")
+        print(f"Subject: {self._subject}\n")
         print("Type '/exit' or press ^C to exit")
         asyncio.run(self._arun())
 
@@ -42,11 +45,6 @@ class ChatApplication:
         llm_consumer = _build_llm_consumer(self._config)
         chat_contact = Contact(name="Agent", email="agent@example.com")
         seq_id = 0
-
-        subject = typer.prompt("Enter Chat Subject:")
-        if not subject:
-            print("Subject is required, exiting...")
-            return
 
         while True:
             prompt = _get_user_prompt()
@@ -58,7 +56,7 @@ class ChatApplication:
                 uid=seq_id,
                 sender=self._user,
                 receiver=chat_contact,
-                subject=subject,
+                subject=self._subject,
                 body=prompt,
                 sent_at=datetime.now(),
                 headers=MessageHeaders(
@@ -118,6 +116,7 @@ def _get_user_prompt() -> Optional[str]:
             continue
         if m == "/exit":
             return None
+        return m
 
 
 def _read_user_prompt() -> Optional[str]:
