@@ -59,8 +59,6 @@ If any of the tools return error, you should notify user about it.
 
 ERR_MAIL_RESPONSE = """
 Sorry, I'm having trouble processing your message.
-I forwarded your request to a property manager.
-Please wait for their response.
 
 Thread ID: {thread_id}
 Error: {error}
