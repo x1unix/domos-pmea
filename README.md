@@ -121,21 +121,25 @@ Here is a list of trade-offs and things which I could do if I had more time.
   * Property data is mocked and stored as a JSON file for sake of simplicity.
   * This can be moved into an actual database - sqlite is fine for local instances.
 * **LLM:**
-  * Tool call arguments validation using schema.
-  * Introduce stable multi-user support in conversation.
-    * Currently agent is already supplied with sender name and address but it doesn't have separate roles.
-  * Support *reasoning models* and filter out `<think>...</think>` and other artifacts.
-    * I tried to circumvent this by asking model to use a special `reply_to_user` tool but couldn't get reliable results.
-    * Some models like `qwen3` still made output to chat instead of using the tool.
-  * Use embedding models to cache prompts.
-  * Support attachments (pdf, jpg)
-  * Chat history size management (or at-least a ring buffer).
-  * Ability to export conversations into some form of audit log to track quality.
   * **LLM - Tools:**
-    * `create_ticket`: Ability to track status of created ticket.
+    * `create_ticket`:
+      * Use a dedicated response template instead of relying on AI response.
+      * Ability to track status of created ticket.
     * `forward_to_stakeholder`:
       * It might make sense to reply back to user with `Reply-To` header with landlord's address.
       * Decouple forwared message formatting from sending.
+  * **Optimization:**
+    * Introduce stable multi-user support in conversation.
+      * Currently agent is already supplied with sender name and address but it doesn't have separate roles.
+    * Use embedding models to cache prompts.
+    * Support attachments (pdf, jpg)
+    * Chat history size management (or at-least a ring buffer).
+    * Ability to export conversations into some form of audit log to track quality.
+  * **Misc**
+    * Tool call arguments validation using schema.
+    * Support *reasoning models* and filter out `<think>...</think>` and other artifacts.
+      * I tried to circumvent this by asking model to use a special `reply_to_user` tool but couldn't get reliable results.
+      * Some models like `qwen3` still made output to chat instead of using the tool.
 * **Mail processing:**
   * **IDLE loop server push on GMail occurs with 2-3 minute delay for some reason.**
   * Email clients in threads include reply quotes which need to be removed before processing because:
