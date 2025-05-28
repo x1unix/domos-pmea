@@ -19,7 +19,7 @@ def build_call_tools(ctx: ToolContext, deps: CallToolsDependencies) -> list[Base
     """Constructs a list of tools that can be called by the agent."""
     return [
         FindPropertiesTool(ctx, deps.properties_store),
-        GetPropertyByIdTool(ctx, deps.properties_store),
+        # GetPropertyByIdTool(ctx, deps.properties_store),
         CreateTicketTool(deps.ticket_creator, deps.properties_store),
         ForwardToStakeholderTool(ctx, deps.properties_store, deps.replyer),
     ]

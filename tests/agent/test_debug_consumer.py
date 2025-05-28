@@ -83,7 +83,7 @@ llm_config_ollama_qwen14b = (lambda:
     )
 )
 
-llm_config_ollama = llm_config_ollama_qwen14b
+llm_config_ollama = llm_config_llama31_8b
 
 @dataclass
 class CollectedReply:
