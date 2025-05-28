@@ -11,9 +11,13 @@ venv:
 install-dev: venv
 	@uv pip install -e .
 
-.PHONY: run
-run: install-dev
-	@uv run $(PKG_NAME) --config $(CONFIG_FILE)
+.PHONY: chat
+chat: install-dev
+	@uv run $(PKG_NAME) chat --config $(CONFIG_FILE) $(CHAT_ARGS)
+
+.PHONY: serve
+serve: install-dev
+	@uv run $(PKG_NAME) serve --config $(CONFIG_FILE)
 
 .PHONY: test
 test:

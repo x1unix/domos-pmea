@@ -9,6 +9,7 @@ from .file_writer import MailFileWriter
 
 DEFAULT_IGNORED_DOMAINS = set(["example.com", "example.org"])
 
+
 class ThreadUpdater(Protocol):
     async def add_thread_message(self, message_id: str, thread_id: str) -> None:
         pass
@@ -51,21 +52,13 @@ class MailSender:
         self, parent_msg: Message, dst_email: str, body: str | None
     ):
         msg_id = make_msgid(domain=self._msg_id_domain)
-        msg = EmailMessage()
-        msg["Message-ID"] = msg_id
-        msg["From"] = self._sender
-        msg["To"] = dst_email
-        msg["Subject"] = f"FWD: {parent_msg.subject}"
-
-        forward_header = f"\n\n---\n\nForwarded message from {parent_msg.sender.email}"
-        if body:
-            msg_content = body + forward_header
-            msg_content += "\n".join(
-                [f"> {line}" for line in parent_msg.body.splitlines()]
-            )
-            msg.set_content(msg_content)
-        else:
-            msg.set_content(parent_msg.body + forward_header)
+        msg = make_forward_message(
+            msg_id=msg_id,
+            parent_msg=parent_msg,
+            from_email=self._sender,
+            dst_email=dst_email,
+            body=body,
+        )
 
         if self._should_ignore_domain(dst_email) and self._file_writer:
             self._file_writer.save(msg)
@@ -128,3 +121,21 @@ class MailSender:
             raise Exception(
                 f"failed to add incoming message to a thread {thread_id}"
             ) from e
+
+
+def make_forward_message(
+    parent_msg: Message, from_email: str, msg_id: str, dst_email: str, body: str | None
+) -> EmailMessage:
+    msg = EmailMessage()
+    msg["Message-ID"] = msg_id
+    msg["From"] = from_email
+    msg["To"] = dst_email
+    msg["Subject"] = f"FWD: {parent_msg.subject}"
+
+    forward_header = f"\n\n---\n\nForwarded message from {parent_msg.sender.email}"
+    if body:
+        msg_content = body + forward_header
+        msg_content += "\n".join([f"> {line}" for line in parent_msg.body.splitlines()])
+        msg.set_content(msg_content)
+    else:
+        msg.set_content(parent_msg.body + forward_header)
