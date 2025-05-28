@@ -1,5 +1,9 @@
 # Property Manager Email Assistant - Test Assignment
 
+## How To Run
+
+Please see [this setup guide](docs/SETUP_GUIDE.md).
+
 ## Design
 
 ### Project Structure
