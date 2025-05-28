@@ -11,14 +11,14 @@ Please see [this setup guide](docs/SETUP_GUIDE.md).
 ```
 src/
 └── pmea/
+    ├── app/                  # Application bootstrap
     ├── agent/                # AI Agent Messages Processor
     │   └── tools/            # Tools callable by agent
     ├── config/               # Configuration logic & types
     ├── mailer/               # Email consuming and publishing (IMAP/SMTP)
     ├── models/               # Shared data types and classes
     ├── repository/           # Data access layer
-    ├── app.py                # Bootstrap
-    └── main.py               # Entrypoint
+    └── main.py               # Main executable
 ```
 
 #### Stack
