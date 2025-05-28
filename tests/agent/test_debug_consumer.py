@@ -33,9 +33,12 @@ from pmea.mailer import (
 from pmea.repository.properties import PropertiesRepository
 from pmea.repository.tickets import TicketRepository
 
-TEST_REDIS_DSN = "redis://localhost:6379/0"
-USE_REDIS = os.getenv("USE_REDIS", "true").lower() in ["true", "1"]
-REDIS_FLUSH_BEFORE_TEST = os.getenv("REDIS_FLUSH_BEFORE_TEST", "true").lower() in ["true", "1"]
+def getboolenv(name: str, default: bool) -> bool:
+    return os.getenv(name, str(default)).lower() in ["true", "1"]
+
+TEST_REDIS_DSN = os.getenv("TEST_REDIS_DSN", "redis://localhost:6379/0")
+USE_REDIS = getboolenv("USE_REDIS", True)
+REDIS_FLUSH_BEFORE_TEST = getboolenv("REDIS_FLUSH_BEFORE_TEST", True)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 MAIL_IGNORED_DOMAINS = set(["gmail.com", "example.com", "example.org"])
 
