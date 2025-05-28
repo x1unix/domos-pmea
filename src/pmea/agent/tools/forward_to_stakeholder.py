@@ -11,10 +11,9 @@ class ForwardToStakeholderInputModel(BaseModel):
     """Fields required to forward a mail."""
 
     property_id: int = Field(
-        ..., description="ID of the property to contact a stakeholder about"
+        description="ID of the property to contact a stakeholder about"
     )
     additional_comments: str | None = Field(
-        None,
         description="Optional additional comments to include in the email (string or null)",
     )
 
@@ -52,7 +51,7 @@ class ForwardToStakeholderTool(BaseAsyncTool):
     async def _arun(
         self,
         property_id: int,
-        additional_comments: str | None,
+        additional_comments: str | None = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         ctx_key = (
