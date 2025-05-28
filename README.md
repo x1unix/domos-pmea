@@ -27,12 +27,13 @@ src/
 * Redis - Chat history and mail processing state storage.
 * LangChain - wrapper around different AI model/platform providers.
 * Supported AI providers:
-  * Ollama
   * Google (Gemini)
+  * Ollama
 
 ### Assumptions
 
 * All tenants live in US and speak only English.
+* All apartments located in a single city.
 * User won't try to spam, flood or abuse context size of agent.
 * Agent speak only with 1 person in each Email thread.
 
@@ -71,7 +72,7 @@ See system prompt [here](src/pmea/agent/prompts.py).
 
 #### Supported Models & Platforms
 
-Agent supports Ollama (for testing purposes) and Google.
+Agent primerally optimized to run with Google's Gemini but also supports Ollama for testing purposes.
 
 Model reasoning should be **disabled** as I don't filter `<think>` thougts out of output.
 
@@ -88,9 +89,6 @@ In order to interact with the system, agent has access to a set of tools:
 * `find_properties`
   * Provides agent ability to locate tenant's property info, contract information and landlord email.
   * Supports partial non-strict search so agent can try to guess or request extra information if necessary.
-* `get_property_by_id`
-  * Performs strict search by apartment ID.
-  * Can be used by AI if it still remembers correct property ID infered by previous call.
 * `create_ticket`
   * Create a ticket if necessary, as per requirements.
   * Information from `find_properties` is necessary to fill a ticket.
@@ -169,7 +167,7 @@ I used both Cursor and mix of Claude & ChatGPT:
 * ChatGPT o3 model for IMAP protocol and LangChain research where possible.
   * I also tried Gemini Pro reasoning model inside Cursor but it performed poorly.
 
-#### Bootstrapping
+### Bootstrapping
 
 Gemini Pro in Cursor chat was a good tool to boostrap a project - select stack, explore options.
 
@@ -182,20 +180,20 @@ enough time to sync what I did with `PLAN.md`.
 Right now, some parts of the document diverges from actual implementation but I still keep it for \
 historical records.
 
-#### Cursor Wibe-Coding experience
+### Cursor Wibe-Coding experience
 
 Cursor was used to make this assignment. I tried mixing different models (Claude, Gemma, GPT) but sometimes experience look like [on this video](https://youtu.be/_2C2CNmK7dQ?si=AYklZ_-MXaGsohtM).
 
 * Sometimes Cursor could bork half of a codebase because it decided to refactor and break project config. Blind vibe coding is dangerous.
 
-#### General Feelings
+### General Feelings
 
-##### Upsides
+#### Upsides
 
 * gpt-4.1 proven to be the safest code-generation model choice (only template code).
 * Python autocompletion is very convenient except cases where it misses the point and starts introducing bugs.
 
-##### Downsides
+#### Downsides
 
 When dealing with a new domain (for me it was IMAP), I found that AI is often halucinating, giving solutions that doesn't work. \
 This even happens with o1 reasoning model, but not so often as with regular models.
