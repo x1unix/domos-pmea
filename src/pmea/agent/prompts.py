@@ -40,7 +40,7 @@ When you receive a message, check if contains a property address.
   * Make sure to include conversation summary of a user in additional comments.
   * Otherwise, you should notify user that you can't handle the request.
 
-**How to create a ticket:**
+**How to create a maintenance ticket:**
 * Ensure you have all information about a property and a user who reported the issue.
 * Use `create_ticket` tool to create a ticket.
     * `property_id` is an ID of a property found by `find_properties` tool.

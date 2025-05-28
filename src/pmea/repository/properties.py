@@ -42,14 +42,14 @@ class PropertiesRepository:
             addr = query.address.lower()
             results = [
                 p for p in results
-                if p.address.lower().startswith(addr)
+                if addr in p.address.lower()
             ]
         
         if query.apartment:
             apartment = query.apartment.lower()
             results = [
                 p for p in results
-                if p.apartment.lower() == apartment
+                if apartment in p.apartment.lower()
             ]
 
         if query.tenant_name:
