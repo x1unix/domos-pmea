@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, EmailStr
 from langchain_core.callbacks import AsyncCallbackManagerForToolRun
 
 from pmea.models import SupportTicketInputs
-from .types import BaseAsyncTool, PropertiesStore, TicketCreator
+from .types import BaseAsyncTool, PropertiesStore, TicketCreator, ToolContext
 
 
 class SupportTicketInputModel(BaseModel):
@@ -45,11 +45,16 @@ class CreateTicketTool(BaseAsyncTool):
 
     _ticket_creator: TicketCreator
     _properties_store: PropertiesStore
+    _context: ToolContext
 
     def __init__(
-        self, ticket_creator: TicketCreator, properties_store: PropertiesStore
+        self,
+        context: ToolContext,
+        ticket_creator: TicketCreator,
+        properties_store: PropertiesStore,
     ):
         super().__init__()
+        self._context = context
         self._ticket_creator = ticket_creator
         self._properties_store = properties_store
 
