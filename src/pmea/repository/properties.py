@@ -1,17 +1,18 @@
 import json
 from typing import Any, List
-from ..models import Apartment, Tenant, PropertySearchQuery
+from ..models import Property, Tenant, PropertySearchQuery
 
 class PropertiesRepository:
-    _properties: List[Apartment]
+    _properties: List[Property]
     _property_ids: dict[str, int]
 
     def __init__(self, properties_path: str):
         with open(properties_path, "r") as f:
             raw_data: List[dict[int, Any]] = json.load(f)
             self._properties = [
-                Apartment(
+                Property(
                     property_id=int(item["property_id"]),
+                    apartment=item["apartment"],
                     address=item["address"],
                     city=item["city"],
                     tenant=Tenant(**item["tenant"]),
@@ -23,15 +24,16 @@ class PropertiesRepository:
             self._property_ids = {a.property_id: i for i, a in enumerate(self._properties)}
 
     def property_exists(self, property_id: int) -> bool:
-        return property_id in self._property_ids
+        i = self._property_ids.get(property_id)
+        return i is not None
 
-    def get_property_by_id(self, property_id: int) -> Apartment | None:
-        if not property_id in self._property_ids:
+    def get_property_by_id(self, property_id: int) -> Property | None:
+        i = self._property_ids.get(property_id)
+        if i is None:
             return None
-        i = self._property_ids[property_id]
         return self._properties[i]
 
-    def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
+    def find_properties(self, query: PropertySearchQuery) -> List[Property]:
         if not query.address and not query.tenant_name and not query.tenant_email:
             raise ValueError("At least one search criteria must be provided.")
 
@@ -42,6 +44,13 @@ class PropertiesRepository:
             results = [
                 p for p in results
                 if p.address.lower().startswith(addr)
+            ]
+        
+        if query.apartment:
+            apartment = query.apartment.lower()
+            results = [
+                p for p in results
+                if p.apartment.lower() == apartment
             ]
 
         if query.city:

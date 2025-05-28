@@ -19,8 +19,13 @@ class FindPropertyInput(BaseModel):
         None,
         description=(
             "Tenant's building number, street name and apartment number. Can be partial or full."
-            "Example: '221 Baker St, Apt 2D' or '3 Hillow Ave, 3rd Floor'"
+            "Example: '221 Baker St' or '3 Hillow Ave'"
         ),
+    )
+
+    apartment: str | None = Field(
+        None,
+        description="Apartment number without 'Apt' or 'Unit' prefix, optional",
     )
 
     city: str | None = Field(
@@ -95,26 +100,30 @@ class FindPropertiesTool(BaseAsyncTool):
         city: str | None = None,
         tenant_name: str | None = None,
         tenant_email: str | None = None,
+        apartment: str | None = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         ctx_key = (
             f"{self._context.thread_id}:{self._context.original_message.headers.msg_id}"
         )
+        params = {
+            "address": address,
+            "city": city,
+            "apartment": apartment,
+            "tenant_name": tenant_name,
+            "tenant_email": tenant_email,
+        }
         try:
             logger.info(
                 "%s tool called: params=%s; msg=%s",
                 self.name,
-                {
-                    "address": address,
-                    "city": city,
-                    "tenant_name": tenant_name,
-                    "tenant_email": tenant_email,
-                },
+                params,
                 ctx_key,
             )
             query = PropertySearchQuery(
                 address=address,
                 city=city,
+                apartment=apartment,
                 tenant_name=tenant_name,
                 tenant_email=tenant_email,
             )
@@ -130,12 +139,7 @@ class FindPropertiesTool(BaseAsyncTool):
                 "%s tool returned error: %s (params=%s; msg=%s)",
                 self.name,
                 e,
-                {
-                    "address": address,
-                    "city": city,
-                    "tenant_name": tenant_name,
-                    "tenant_email": tenant_email,
-                },
+                params,
                 ctx_key,
             )
             return json.dumps({"success": False})

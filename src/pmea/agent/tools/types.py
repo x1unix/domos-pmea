@@ -3,7 +3,7 @@ import logging
 from typing import List, Protocol
 from langchain_core.tools import BaseTool
 from pmea.mailer.types import Message
-from pmea.models import Apartment, PropertySearchQuery, SupportTicketInputs
+from pmea.models import Property, PropertySearchQuery, SupportTicketInputs
 
 
 class MailReplyer(Protocol):
@@ -21,10 +21,10 @@ class MailReplyer(Protocol):
 
 
 class PropertiesStore(Protocol):
-    def find_properties(self, query: PropertySearchQuery) -> List[Apartment]:
+    def find_properties(self, query: PropertySearchQuery) -> List[Property]:
         """Finds properties matching the given query."""
 
-    def get_property_by_id(self, property_id: int) -> Apartment | None:
+    def get_property_by_id(self, property_id: int) -> Property | None:
         """Gets a property by its ID."""
 
     def property_exists(self, property_id: int) -> bool:

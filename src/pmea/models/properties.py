@@ -8,8 +8,9 @@ class Tenant:
     phone: str
 
 @dataclass
-class Apartment:
+class Property:
     property_id: int
+    apartment: str
     address: str
     city: str
     tenant: Tenant
@@ -19,6 +20,7 @@ class Apartment:
 @dataclass
 class PropertySearchQuery:
     address: str | None = None
+    apartment: str | None = None
     city: str | None = None
     tenant_name: str | None = None
     tenant_email: str | None = None

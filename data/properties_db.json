@@ -1,7 +1,8 @@
 [
   {
     "property_id": 1,
-    "address": "2000 Holland Av, Apt 1F",
+    "address": "2000 Holland Av",
+    "apartment": "1F",
     "city": "New York",
     "tenant": {
       "name": "Alex Smith",
@@ -13,7 +14,8 @@
   },
   {
     "property_id": 2,
-    "address": "123 Greenwich Ave, Apt 5B",
+    "address": "123 Greenwich Ave",
+    "apartment": "5B",
     "city": "Bronx",
     "tenant": {
       "name": "Denys Sedchenko",
@@ -25,7 +27,8 @@
   },
   {
     "property_id": 3,
-    "address": "100 Holland Av, Apt 2D",
+    "address": "100 Holland Av",
+    "apartment": "2D",
     "city": "Bronx",
     "tenant": {
       "name": "Miki Tanaka",
@@ -37,7 +40,8 @@
   },
   {
     "property_id": 4,
-    "address": "450 Market St, Suite 300",
+    "address": "450 Market St",
+    "apartment": "300",
     "city": "San Francisco",
     "tenant": {
       "name": "Jane Doe",
@@ -49,8 +53,9 @@
   },
   {
     "property_id": 5,
-    "address": "789 Oak Lane, Unit 12",
+    "address": "789 Oak Lane",
     "city": "Chicago",
+    "apartment": "12",
     "tenant": {
       "name": "Robert Jones",
       "email": "rob.jones@example.com",
@@ -61,7 +66,8 @@
   },
   {
     "property_id": 6,
-    "address": "321 Pine St, #101",
+    "address": "321 Pine St",
+    "apartment": "101",
     "city": "Seattle",
     "tenant": {
       "name": "Emily White",
@@ -73,7 +79,8 @@
   },
   {
     "property_id": 7,
-    "address": "555 Maple Dr, Apt C",
+    "address": "555 Maple Dr",
+    "apartment": "102",
     "city": "Austin",
     "tenant": {
       "name": "David Brown",
@@ -85,7 +92,8 @@
   },
   {
     "property_id": 8,
-    "address": "987 Elm Rd, PH-2",
+    "address": "987 Elm Rd",
+    "apartment": "4806",
     "city": "Miami",
     "tenant": {
       "name": "Sophia Garcia",
@@ -97,7 +105,8 @@
   },
   {
     "property_id": 9,
-    "address": "654 Birch Blvd, Unit 7A",
+    "address": "654 Birch Blvd",
+    "apartment": "7A",
     "city": "Denver",
     "tenant": {
       "name": "Michael Lee",
@@ -109,7 +118,8 @@
   },
   {
     "property_id": 100,
-    "address": "111 Willow Way, 3rd Floor",
+    "address": "111 Willow Way",
+    "apartment": "3F",
     "city": "Boston",
     "tenant": {
       "name": "Olivia Miller",
