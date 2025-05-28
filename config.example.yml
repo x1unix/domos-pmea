@@ -1,28 +1,82 @@
-consumer:
-  queue_size: 1000
+# Email listener configuration.
+listener:
+  # Size of incoming messages queue.
+  msg_queue_size: 10
+
+  # Number of messages to fetch from IMAP server at once.
+  msg_fetch_batch_size: 3
+
+  # Number of workers to process incoming messages.
+  worker_count: 2
+
+  # List of addresses to ignore incoming messages from.
+  ignore_addresses:
+    - no-reply@accounts.google.com
+
+storage:
+  # Mock properties database.
+  properties: "data/properties_db.json"
+
+  # Path to a directory where created maintenance tickets will be stored.
+  tickets_dir: "data/tickets"
+
+  # All forwarded mails to "@example.com" will be stored here.
+  # Feature for testing purposes, optional.
+  forwarded_messages_dir: "data/forwarded_messages"
+
+redis:
+  dsn: "redis://localhost:6379/0"
+
+# Email provider configuration.
 email:
   imap_host: "imap.gmail.com"
   imap_port: 993
   smtp_host: "smtp.gmail.com"
   smtp_port: 587
+  username: "example@gmail.com" # Your Gmail address.
+  password: "your app password" # For Gmail - use App Password.
   use_ssl: true
   mailbox: "INBOX"
-
-  # Important: for gmail - enable 2fa and use app password.
-  # See: https://myaccount.google.com/u/1/apppasswords
-  username: "username@gmail.com"
-  password: "your-password"
-
   # RFC 2177 recommends break and restart IDLE every 29 minutes to keep NATs happy.
   idle_timeout: 1740
   reconnect_delay: 5
+  reconnect_max_attempts: 3
 
+  # Domain to use for Message-ID header, optional.
+  # May be different for different providers.
+  # E.g. fastmail uses `app.fastmail.com`
+  # If empty - uses domain from username.
+  msg_id_domain: "gmail.com"
+
+# LLM provider configuration.
+#
+# Recommended model for Ollama is "qwen3.1:14b" or "llama3.1:8b".
+# Recommended model for Google is "gemini-2.0-flash".
+
+# Google Gemini example:
 llm:
-  api_key: "your-api-key"
-  model_name: "gemini-2.0-flash"
-  temperature: 0.4
+  provider: "google"
+  model_name: "gemini-2.0-flash" # Recommended model.
+  api_key: "your-api-key" # Can also be provided via GEMINI_API_KEY environment variable.
+  temperature: 1.0 # Range varies by model. Lower is more deterministic.
+  # Optional model parameters. Specific to each provider and model.
+  # Google example:
+  # model_options:
+  #   thinking_budget: 0
+  #   top_k: 10
+  #   top_p: 0.95
+
+# If you wish to use self-hosted model, Ollama is also supported (but not recommended).
+# llm:
+#   provider: "ollama"
+#   model_name: "llama3.1:8b"
+#   temperature: 0.6
+#   ollama_options:
+#     context_length: 12288 # 12k tokens at least is recommended.
+#   model_options:
+#     with_thinking: false
 
 # Set log file and custom level if needed.
 # logging:
-#   level: "INFO"
+# level: "DEBUG"
 #   file: "pmea.log"
