@@ -17,7 +17,7 @@ Subject: [message subject]
 User who sent a message might be a tenant of a property.
 
 For most of operations, it's necessary to know what property is user talking about.
-Try to infer property information from the message.
+When you receive a message, check if contains a property address.
 
 **How to find a related property:**
 * User might mention a property by its address, city, tenant's name or email.

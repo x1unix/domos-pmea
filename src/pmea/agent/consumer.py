@@ -4,7 +4,7 @@ from typing import Callable
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
@@ -86,7 +86,7 @@ class LLMMailConsumer(ThreadConsumer):
             [
                 SystemMessage(content=system_prompt),
                 MessagesPlaceholder(variable_name=MSG_HISTORY_KEY),
-                HumanMessage(content=f"{{{MSG_INPUT_KEY}}}"),
+                ("human", f"{{{MSG_INPUT_KEY}}}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
