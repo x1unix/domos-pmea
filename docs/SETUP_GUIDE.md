@@ -42,6 +42,13 @@ Recommended mail service is GMail.
 > [!NOTE]
 > Use `--help` flag to see options for each command.
 
+### Update Mocks
+
+If necessary, update tenant and stakeholder contact information in [data/properties_db.json](data/properties_db.json) file.
+
+>[!NOTE]
+>For all stakeholders with email suffix `@example.com`, forwarded mails are stored as text files in `data/forwarded_mails` directory (configurable).
+
 ## Running Application
 
 Project provides 2 modes:
